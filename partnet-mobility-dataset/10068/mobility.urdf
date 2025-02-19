@@ -1,0 +1,197 @@
+<?xml version="1.0" ?>
+<robot name="partnet_528fd36db2ca7e47df18258a84843c90">
+	<link name="base"/>
+	<link name="link_0">
+		<visual name="frame-25">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-7.obj"/>
+			</geometry>
+		</visual>
+		<visual name="frame-25">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-0.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-7.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-0.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_0" type="fixed">
+		<origin rpy="1.570796326794897 0 -1.570796326794897" xyz="0 0 0"/>
+		<child link="link_0"/>
+		<parent link="base"/>
+	</joint>
+	<link name="link_1">
+		<visual name="door_frame-22">
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/new-3.obj"/>
+			</geometry>
+		</visual>
+		<visual name="handle-23">
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</visual>
+		<visual name="handle-23">
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/original-21.obj"/>
+			</geometry>
+		</visual>
+		<visual name="handle-23">
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/original-22.obj"/>
+			</geometry>
+		</visual>
+		<visual name="handle-23">
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/original-20.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/new-3.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/original-21.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/original-22.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.39401300003961603 -0.8371789999999999 -0.41906307121052194"/>
+			<geometry>
+				<mesh filename="textured_objs/original-20.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_1" type="revolute">
+		<origin xyz="0.39401300003961603 0.8371789999999999 0.41906307121052194"/>
+		<axis xyz="0 1 0"/>
+		<child link="link_1"/>
+		<parent link="link_0"/>
+		<limit lower="-0.0" upper="3.141592653589793"/>
+	</joint>
+	<link name="link_2">
+		<visual name="display_panel-27">
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/new-5.obj"/>
+			</geometry>
+		</visual>
+		<visual name="other_leaf-31">
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/new-4.obj"/>
+			</geometry>
+		</visual>
+		<visual name="door_frame-20">
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/new-6.obj"/>
+			</geometry>
+		</visual>
+		<visual name="handle-21">
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</visual>
+		<visual name="handle-21">
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/original-16.obj"/>
+			</geometry>
+		</visual>
+		<visual name="handle-21">
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/original-17.obj"/>
+			</geometry>
+		</visual>
+		<visual name="handle-21">
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/original-14.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/new-5.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/new-4.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/new-6.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/original-16.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/original-17.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0.395394073019945 -0.8371789999999999 -0.4175055191637276"/>
+			<geometry>
+				<mesh filename="textured_objs/original-14.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_2" type="revolute">
+		<origin xyz="-0.395394073019945 0.8371789999999999 0.4175055191637276"/>
+		<axis xyz="0 -1 0"/>
+		<child link="link_2"/>
+		<parent link="link_0"/>
+		<limit lower="0.0" upper="3.141592653589793"/>
+	</joint>
+</robot>

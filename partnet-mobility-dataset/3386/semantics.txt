@@ -1,0 +1,6 @@
+link_0 slider button
+link_1 slider button
+link_2 slider button
+link_3 slider button
+link_4 free display_base
+link_5 slider translation_screen

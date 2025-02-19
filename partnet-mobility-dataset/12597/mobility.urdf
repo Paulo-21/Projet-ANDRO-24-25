@@ -1,0 +1,100 @@
+<?xml version="1.0" ?>
+<robot name="partnet_b132e38eab307f2649ad049dc6857ad1">
+	<link name="base"/>
+	<link name="link_0">
+		<visual name="door_frame-27">
+			<origin xyz="-0.6578660000000003 0.2980411175850787 -0.5762172681832401"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</visual>
+		<visual name="handle-28">
+			<origin xyz="-0.6578660000000003 0.2980411175850787 -0.5762172681832401"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.6578660000000003 0.2980411175850787 -0.5762172681832401"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.6578660000000003 0.2980411175850787 -0.5762172681832401"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_0" type="revolute">
+		<origin xyz="0.6578660000000003 -0.2980411175850787 0.5762172681832401"/>
+		<axis xyz="1 0 0"/>
+		<child link="link_0"/>
+		<parent link="link_2"/>
+		<limit lower="-0.0" upper="1.5707963267948966"/>
+	</joint>
+	<link name="link_1">
+		<visual name="control_button-24">
+			<origin xyz="-0.26985852300226404 0.4516419333982529 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-4.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.26985852300226404 0.4516419333982529 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-4.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_1" type="continuous">
+		<origin xyz="0.26985852300226404 -0.4516419333982529 0"/>
+		<axis xyz="0 0 -1"/>
+		<child link="link_1"/>
+		<parent link="link_2"/>
+	</joint>
+	<link name="link_2">
+		<visual name="frame-21">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-7.obj"/>
+			</geometry>
+		</visual>
+		<visual name="frame-21">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-6.obj"/>
+			</geometry>
+		</visual>
+		<visual name="control_panel-25">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-5.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-7.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-6.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-5.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_2" type="fixed">
+		<origin rpy="1.570796326794897 0 -1.570796326794897" xyz="0 0 0"/>
+		<child link="link_2"/>
+		<parent link="base"/>
+	</joint>
+</robot>

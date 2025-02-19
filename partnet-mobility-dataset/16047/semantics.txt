@@ -1,0 +1,4 @@
+link_0 hinge head
+link_1 slider translation_bar
+link_2 free lamp_base
+link_3 hinge rotation_bar

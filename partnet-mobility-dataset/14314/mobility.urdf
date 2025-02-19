@@ -1,0 +1,136 @@
+<?xml version="1.0" ?>
+<robot name="partnet_1579c3aae8e26472db1afe6c464e7652">
+	<link name="base"/>
+	<link name="link_0">
+		<visual name="lamp_base_part-22">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-7.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-7.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_0" type="fixed">
+		<origin rpy="1.570796326794897 0 -1.570796326794897" xyz="0 0 0"/>
+		<child link="link_0"/>
+		<parent link="base"/>
+	</joint>
+	<link name="link_1">
+		<visual name="lamp_pole-13">
+			<origin xyz="-0.0035150624265571752 0 0.14035127070984071"/>
+			<geometry>
+				<mesh filename="textured_objs/original-5.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.0035150624265571752 0 0.14035127070984071"/>
+			<geometry>
+				<mesh filename="textured_objs/original-5.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_1" type="continuous">
+		<origin xyz="0.0035150624265571752 0 -0.14035127070984071"/>
+		<axis xyz="0 -1 0"/>
+		<child link="link_1"/>
+		<parent link="link_0"/>
+	</joint>
+	<link name="link_2">
+		<visual name="lamp_body_curved-14">
+			<origin xyz="-0.0035150624265571726 0 0.14035127070984071"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.0035150624265571726 0 0.14035127070984071"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_2" type="prismatic">
+		<origin xyz="-2.6020852139652106e-18 0 0.0"/>
+		<axis xyz="0 -1 0"/>
+		<child link="link_2"/>
+		<parent link="link_1"/>
+		<limit lower="-0.14000000000000012" upper="0.15599999999999992"/>
+	</joint>
+	<link name="link_3">
+		<visual name="lamp_cover_holder-9">
+			<origin xyz="-0.0035157422102886143 -0.8784614464746786 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-3.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-12">
+			<origin xyz="-0.0035157422102886143 -0.8784614464746786 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-10.obj"/>
+			</geometry>
+		</visual>
+		<visual name="light_bulb-11">
+			<origin xyz="-0.0035157422102886143 -0.8784614464746786 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-8.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.0035157422102886143 -0.8784614464746786 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-3.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.0035157422102886143 -0.8784614464746786 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-10.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.0035157422102886143 -0.8784614464746786 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-8.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_3" type="continuous">
+		<origin xyz="6.797837314416813e-07 0.8784614464746786 0.14035127070984071"/>
+		<axis xyz="0 0 1"/>
+		<child link="link_3"/>
+		<parent link="link_2"/>
+	</joint>
+	<link name="link_4">
+		<visual name="movable_part-20">
+			<origin xyz="-0.00351460799368542 -0.4453305 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-6.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.00351460799368542 -0.4453305 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-6.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_4" type="continuous">
+		<origin xyz="0.0 0.0 0"/>
+		<axis xyz="0 0 1"/>
+		<child link="link_4"/>
+		<parent link="link_4_helper"/>
+	</joint>
+	<link name="link_4_helper"/>
+	<joint name="joint_5" type="prismatic">
+		<origin xyz="-4.5443287175536e-07 0.4453305 0.14035127070984071"/>
+		<axis xyz="0 0 1"/>
+		<child link="link_4_helper"/>
+		<parent link="link_1"/>
+		<limit lower="0" upper="0.005"/>
+	</joint>
+</robot>

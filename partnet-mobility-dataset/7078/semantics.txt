@@ -1,0 +1,4 @@
+link_0 free clock_body
+link_1 hinge hand
+link_2 hinge hand
+link_3 hinge hand

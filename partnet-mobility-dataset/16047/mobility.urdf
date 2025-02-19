@@ -1,0 +1,301 @@
+<?xml version="1.0" ?>
+<robot name="partnet_8eee3b5fd2f3abd4bcde6f92ef1f7ee7">
+	<link name="base"/>
+	<link name="link_0">
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-12.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-13.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-15.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-16.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-18.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-17.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/new-6.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-19.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-14.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-20.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_shade-14">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-22.obj"/>
+			</geometry>
+		</visual>
+		<visual name="light_socket-12">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/new-5.obj"/>
+			</geometry>
+		</visual>
+		<visual name="light_bulb-13">
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/new-4.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-12.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-13.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-15.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-16.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-18.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-17.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/new-6.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-19.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-14.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-20.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/original-22.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/new-5.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.007945082816432036 -0.19056806545412663 -0.08514668930524602"/>
+			<geometry>
+				<mesh filename="textured_objs/new-4.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_0" type="revolute">
+		<origin xyz="0.0066703716119032915 0.003100135887853628 0.011211432628130735"/>
+		<axis xyz="-0.9977958771751636 0.05687428249466196 -0.03418630548865076"/>
+		<child link="link_0"/>
+		<parent link="link_3"/>
+		<limit lower="0.0" upper="1.9980529276831085"/>
+	</joint>
+	<link name="link_1">
+		<visual name="lamp_body_curved-15">
+			<origin xyz="-4.6912983916503476e-05 0 0.1768215"/>
+			<geometry>
+				<mesh filename="textured_objs/original-5.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_body_curved-15">
+			<origin xyz="-4.6912983916503476e-05 0 0.1768215"/>
+			<geometry>
+				<mesh filename="textured_objs/original-10.obj"/>
+			</geometry>
+		</visual>
+		<visual name="clamp_frame-18">
+			<origin xyz="-4.6912983916503476e-05 0 0.1768215"/>
+			<geometry>
+				<mesh filename="textured_objs/original-4.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-4.6912983916503476e-05 0 0.1768215"/>
+			<geometry>
+				<mesh filename="textured_objs/original-5.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-4.6912983916503476e-05 0 0.1768215"/>
+			<geometry>
+				<mesh filename="textured_objs/original-10.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-4.6912983916503476e-05 0 0.1768215"/>
+			<geometry>
+				<mesh filename="textured_objs/original-4.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_1" type="prismatic">
+		<origin xyz="4.6912983916503476e-05 0 -0.1768215"/>
+		<axis xyz="0 -1 0"/>
+		<child link="link_1"/>
+		<parent link="link_2"/>
+		<limit lower="-0.1479999999999999" upper="0.08400000000000007"/>
+	</joint>
+	<link name="link_2">
+		<visual name="clamp_screw-19">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-3.obj"/>
+			</geometry>
+		</visual>
+		<visual name="clamp_handle-20">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-3.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_2" type="fixed">
+		<origin rpy="1.570796326794897 0 -1.570796326794897" xyz="0 0 0"/>
+		<child link="link_2"/>
+		<parent link="base"/>
+	</joint>
+	<link name="link_3">
+		<visual name="lamp_arm_straight_bar-7">
+			<origin xyz="-0.0012747112045287442 -0.187467929566273 -0.07393525667711529"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_arm_straight_bar-8">
+			<origin xyz="-0.0012747112045287442 -0.187467929566273 -0.07393525667711529"/>
+			<geometry>
+				<mesh filename="textured_objs/new-0.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_arm_straight_bar-9">
+			<origin xyz="-0.0012747112045287442 -0.187467929566273 -0.07393525667711529"/>
+			<geometry>
+				<mesh filename="textured_objs/new-3.obj"/>
+			</geometry>
+		</visual>
+		<visual name="lamp_arm_straight_bar-10">
+			<origin xyz="-0.0012747112045287442 -0.187467929566273 -0.07393525667711529"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.0012747112045287442 -0.187467929566273 -0.07393525667711529"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.0012747112045287442 -0.187467929566273 -0.07393525667711529"/>
+			<geometry>
+				<mesh filename="textured_objs/new-0.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.0012747112045287442 -0.187467929566273 -0.07393525667711529"/>
+			<geometry>
+				<mesh filename="textured_objs/new-3.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.0012747112045287442 -0.187467929566273 -0.07393525667711529"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_3" type="continuous">
+		<origin xyz="0.0012277982206122407 0.187467929566273 0.2507567566771153"/>
+		<axis xyz="0 0.36688641631006125 -0.930265745648608"/>
+		<child link="link_3"/>
+		<parent link="link_1"/>
+	</joint>
+</robot>

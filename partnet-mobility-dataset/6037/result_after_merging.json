@@ -1,0 +1,1 @@
+[{"name": "pot", "ori_id": 0, "children": [{"name": "body", "ori_id": 1, "children": [{"name": "lid", "id": 2, "ori_id": 2, "objs": ["original-1"], "text": "lid"}, {"name": "container", "id": 3, "ori_id": 3, "objs": ["original-2"], "text": "container"}], "text": "body", "id": 1, "objs": ["original-1", "original-2"]}], "text": "pot", "id": 0, "objs": ["original-1", "original-2"]}]

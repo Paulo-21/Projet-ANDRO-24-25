@@ -1,0 +1,157 @@
+<?xml version="1.0" ?>
+<robot name="partnet_1e5712458907fe06b362845c6edb57fc">
+	<link name="base"/>
+	<link name="link_0">
+		<visual name="switch-2">
+			<origin xyz="0 0.3458051596345232 0.1117145"/>
+			<geometry>
+				<mesh filename="textured_objs/new-5.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0.3458051596345232 0.1117145"/>
+			<geometry>
+				<mesh filename="textured_objs/new-5.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_0" type="revolute">
+		<origin xyz="0 -0.3458051596345232 -0.1117145"/>
+		<axis xyz="1 0 0"/>
+		<child link="link_0"/>
+		<parent link="link_2"/>
+		<limit lower="0.0" upper="1.5707963267948966"/>
+	</joint>
+	<link name="link_1">
+		<visual name="switch-13">
+			<origin xyz="0 0.3458051596345232 0.1117145"/>
+			<geometry>
+				<mesh filename="textured_objs/new-7.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0.3458051596345232 0.1117145"/>
+			<geometry>
+				<mesh filename="textured_objs/new-7.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_1" type="revolute">
+		<origin xyz="0 -0.3458051596345232 -0.1117145"/>
+		<axis xyz="1 0 0"/>
+		<child link="link_1"/>
+		<parent link="link_2"/>
+		<limit lower="0.0" upper="1.5707963267948966"/>
+	</joint>
+	<link name="link_2">
+		<visual name="surface_base-10">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-3.obj"/>
+			</geometry>
+		</visual>
+		<visual name="horizontal_support-12">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-6.obj"/>
+			</geometry>
+		</visual>
+		<visual name="vertical_support-14">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</visual>
+		<visual name="other_leaf-16">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-3.obj"/>
+			</geometry>
+		</visual>
+		<visual name="other_leaf-16">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-3.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-6.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-3.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_2" type="fixed">
+		<origin rpy="1.570796326794897 0 -1.570796326794897" xyz="0 0 0"/>
+		<child link="link_2"/>
+		<parent link="base"/>
+	</joint>
+	<link name="link_3">
+		<visual name="tube-8">
+			<origin xyz="0.0004330000000000028 0 0.11171450000000001"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</visual>
+		<visual name="tube-8">
+			<origin xyz="0.0004330000000000028 0 0.11171450000000001"/>
+			<geometry>
+				<mesh filename="textured_objs/new-15.obj"/>
+			</geometry>
+		</visual>
+		<visual name="mouth-17">
+			<origin xyz="0.0004330000000000028 0 0.11171450000000001"/>
+			<geometry>
+				<mesh filename="textured_objs/new-14.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0.0004330000000000028 0 0.11171450000000001"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0.0004330000000000028 0 0.11171450000000001"/>
+			<geometry>
+				<mesh filename="textured_objs/new-15.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0.0004330000000000028 0 0.11171450000000001"/>
+			<geometry>
+				<mesh filename="textured_objs/new-14.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_3" type="continuous">
+		<origin xyz="-0.0004330000000000028 0 -0.11171450000000001"/>
+		<axis xyz="0 1 0"/>
+		<child link="link_3"/>
+		<parent link="link_2"/>
+	</joint>
+</robot>

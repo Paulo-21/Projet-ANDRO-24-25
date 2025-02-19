@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+<robot name="partnet_d2cd542928c5b684c98f75a9ff83e3b7">
+	<link name="base"/>
+	<link name="link_0">
+		<visual name="hand-4">
+			<origin xyz="0.01868318448607207 0.019469226660817834 -0.11726300000000034"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0.01868318448607207 0.019469226660817834 -0.11726300000000034"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_0" type="continuous">
+		<origin xyz="-0.01868318448607207 -0.019469226660817834 0.11726300000000034"/>
+		<axis xyz="0 0 1"/>
+		<child link="link_0"/>
+		<parent link="link_2"/>
+	</joint>
+	<link name="link_1">
+		<visual name="hand-5">
+			<origin xyz="0.01868318448607207 0.019469226660817834 -0.11726300000000034"/>
+			<geometry>
+				<mesh filename="textured_objs/original-1.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0.01868318448607207 0.019469226660817834 -0.11726300000000034"/>
+			<geometry>
+				<mesh filename="textured_objs/original-1.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_1" type="continuous">
+		<origin xyz="-0.01868318448607207 -0.019469226660817834 0.11726300000000034"/>
+		<axis xyz="0 0 1"/>
+		<child link="link_1"/>
+		<parent link="link_2"/>
+	</joint>
+	<link name="link_2">
+		<visual name="frame-3">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-4.obj"/>
+			</geometry>
+		</visual>
+		<visual name="surface-6">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-5.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-4.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-5.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_2" type="fixed">
+		<origin rpy="1.570796326794897 0 -1.570796326794897" xyz="0 0 0"/>
+		<child link="link_2"/>
+		<parent link="base"/>
+	</joint>
+</robot>

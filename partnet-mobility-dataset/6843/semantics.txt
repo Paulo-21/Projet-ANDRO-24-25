@@ -1,0 +1,5 @@
+link_0 hinge hand
+link_1 hinge hand
+link_2 slider alarm_ring
+link_3 slider alarm_ring
+link_4 free clock_body

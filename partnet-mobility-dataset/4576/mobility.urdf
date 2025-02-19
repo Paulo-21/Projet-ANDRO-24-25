@@ -1,0 +1,68 @@
+<?xml version="1.0" ?>
+<robot name="partnet_19a4584a4d29778a78585e33b915d9a5">
+	<link name="base"/>
+	<link name="link_0">
+		<visual name="frame-6">
+			<origin xyz="-0.031819266782515676 -0.4565899999999996 0.32305450613274633"/>
+			<geometry>
+				<mesh filename="textured_objs/new-3.obj"/>
+			</geometry>
+		</visual>
+		<visual name="screen-7">
+			<origin xyz="-0.031819266782515676 -0.4565899999999996 0.32305450613274633"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="-0.031819266782515676 -0.4565899999999996 0.32305450613274633"/>
+			<geometry>
+				<mesh filename="textured_objs/new-3.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="-0.031819266782515676 -0.4565899999999996 0.32305450613274633"/>
+			<geometry>
+				<mesh filename="textured_objs/new-2.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_0" type="prismatic">
+		<origin xyz="0.031819266782515676 0.4565899999999996 -0.32305450613274633"/>
+		<axis xyz="0 1 0"/>
+		<child link="link_0"/>
+		<parent link="link_1"/>
+		<limit lower="0" upper="0.31599999999999984"/>
+	</joint>
+	<link name="link_1">
+		<visual name="base_support-4">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</visual>
+		<visual name="surface-5">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-0.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-1.obj"/>
+			</geometry>
+		</collision>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/new-0.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_1" type="fixed">
+		<origin rpy="1.570796326794897 0 -1.570796326794897" xyz="0 0 0"/>
+		<child link="link_1"/>
+		<parent link="base"/>
+	</joint>
+</robot>

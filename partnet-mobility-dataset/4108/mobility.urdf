@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<robot name="partnet_8442df5146f188a925ebd1cd0b422e32">
+	<link name="base"/>
+	<link name="link_0">
+		<visual name="container-8">
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="textured_objs/original-2.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_0" type="fixed">
+		<origin rpy="1.570796326794897 0 -1.570796326794897" xyz="0 0 0"/>
+		<child link="link_0"/>
+		<parent link="base"/>
+	</joint>
+	<link name="link_1">
+		<visual name="other_leaf-10">
+			<origin xyz="0.0008369999999999905 0 -0.0020227394251847407"/>
+			<geometry>
+				<mesh filename="textured_objs/original-1.obj"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin xyz="0.0008369999999999905 0 -0.0020227394251847407"/>
+			<geometry>
+				<mesh filename="textured_objs/original-1.obj"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="joint_1" type="prismatic">
+		<origin xyz="-0.0008369999999999905 0 0.0020227394251847407"/>
+		<axis xyz="0 1 0"/>
+		<child link="link_1"/>
+		<parent link="link_0"/>
+		<limit lower="0.040000000000000036" upper="0.1080000000000001"/>
+	</joint>
+</robot>

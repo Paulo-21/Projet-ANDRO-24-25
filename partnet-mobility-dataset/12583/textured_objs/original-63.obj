@@ -1,0 +1,12 @@
+# SSTK version 0.8.0
+# 63
+mtllib original-63.mtl
+o mesh63/mesh63-geometry#mesh63-geometry
+v -0.037845 0.688639 0.482773
+v -0.042654 0.688639 0.482403
+v -0.040107 0.688639 0.483532
+vn 0 1 0
+vn 0 -1 0
+usemtl material_0_0
+f 1//1 2//1 3//1
+f 3//2 2//2 1//2

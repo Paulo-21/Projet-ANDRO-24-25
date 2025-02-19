@@ -1,0 +1,1 @@
+[{"text": "Faucet", "children": [{"text": "Normal Faucet", "children": [{"text": "Switch", "objs": ["original-5", "original-2"], "id": 2, "name": "switch"}, {"text": "Frame", "children": [{"text": "Surface Base", "objs": ["original-4", "original-1"], "id": 4, "name": "surface_base"}], "id": 3, "name": "frame"}], "id": 1, "name": "normal_faucet"}], "id": 0, "name": "faucet"}]
