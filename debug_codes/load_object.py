@@ -56,7 +56,7 @@ def main():
     viewer.set_scene(scene)
     viewer.set_camera_xyz(x=-2, y=0, z=1)
     viewer.set_camera_rpy(r=0, p=-0.3, y=0)
-    object_to_grasp = "10143"  # "103477"#"103369"#'100658'#"44817"#'11826'#'10357' #"10211"#"10143" #"9032" #"8867" #"154" # "156" #"154" #"100073" #"3398"
+    object_to_grasp = "7310"
 
 
     # Load URDF
@@ -65,30 +65,15 @@ def main():
 
     path_panda = "/home/mathilde/Documents/codes/qd_action_project/robots/panda_gripper.urdf"
     robot = loader.load(path_panda)
-    genotype_pose = [0.036,#0.13183406,
-         - 0.04514433,
-         0.12502763,
-         0.70341268,
-         0.2010352,
-         0.78229176,
-         0.13505072] #[-0.5, 0, 0, 1, 0, 0, 0]
-    tabletop_pose = sapien.Pose(
-        p=genotype_pose[0:3],
-        q=genotype_pose[3:8]
-    )
-    robot.set_pose(tabletop_pose)
 
-    monRepertoire = "/home/mathildek/Documents/codes/articulated_object_sapien/object_sapien/"
-
-
-    genotype_pose_robot = [-0.921, -0.226, 0.459, 0.405, 0.522,0.655,0.258] # [-0.5, 0, 0, 1, 0, 0, 0]
+    genotype_pose_robot =  [-0.733, -0.309, 0.052, 0.059, 0.720, -0.026, 0.691] # [-0.5, 0, 0, 1, 0, 0, 0]
     tabletop_pose = sapien.Pose(
         p=genotype_pose_robot[0:3],
         q=genotype_pose_robot[3:8]
     )
     robot.set_pose(tabletop_pose)
-    lababo ="/home/mathilde/Documents/codes/qd_action_project/PartNetMobility_partial_dataset/100658/mobility.urdf"
-    [1.067, -0.191, 0.446, 0.346, 0.624, 0.521,0.468]
+    nbr_obj =  7310
+    lababo ="/home/mathilde/Documents/codes/qd_action_project/partnet-mobility-dataset/" +str(nbr_obj) + "/mobility.urdf"
     rescaledobj =  lababo #"/home/mathildek/Documents/codes/qd_action_project/PartNetMobility_partial_dataset/100658/mobility.urdf"#"/home/mathildek/Documents/codes/articulated_object_sapien/object_sapien/3398_rescaled/mobility.urdf"
 
     genotype_pose_object = [0,

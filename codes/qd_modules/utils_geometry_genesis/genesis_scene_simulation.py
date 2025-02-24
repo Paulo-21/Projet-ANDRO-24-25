@@ -69,7 +69,7 @@ class Genesis_scene_simulation():
     def load_object(self,multi_thread):
         if self.object is None :
             self.object = self.scene.add_entity(
-                gs.morphs.URDF(file=os.getcwd() + '/PartNetMobility_partial_dataset/' + self.object_to_grasp + '/mobility.urdf',
+                gs.morphs.URDF(file=os.getcwd() + '/partnet-mobility-dataset/' + self.object_to_grasp + '/mobility.urdf',
                                pos=(0, 0, 0),
                               # euler=(0, 0, 0),  # we follow scipy's extrinsic x-y-z rotation convention, in degrees,
                                quat  = (1.0, 0.0, 0.0, 0.0), # we use w-x-y-z convention for quaternions,

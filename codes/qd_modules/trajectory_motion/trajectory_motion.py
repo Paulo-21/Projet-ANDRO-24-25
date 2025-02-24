@@ -61,7 +61,7 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
     else:
         nstep=1000
     small_force_appliend_on_fingers = -0.05
-    hard_force_appliend_on_fingers = -1.5
+    hard_force_appliend_on_fingers = -1.5#0-1.5
 
     sim_scene.robot.set_dofs_position(np.array([0.035, 0.035]), sim_scene.finger_items_number)
     sim_scene.scene.step()
@@ -84,6 +84,7 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
             sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_left_arrow, radius=0.0006, color=vert)
             sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_right_arrow, radius=0.0006, color=rouge)
         sim_scene.scene.step()
+    print("End of applying small control force")
 
 
     parent_link_quat = sim_scene.object.links[0].get_quat()
@@ -277,7 +278,7 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
     n_waypoint = 0
 
     sim_scene.robot.set_pos([x_list[n_waypoint], y_list[n_waypoint], z_list[n_waypoint]])
-    print("stop debugging")
+    print("stop debugging, hard force application will start")
 
     pdb.set_trace()
     n_step = num_points

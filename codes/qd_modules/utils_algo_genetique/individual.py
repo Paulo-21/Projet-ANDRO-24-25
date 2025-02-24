@@ -56,12 +56,12 @@ class Individual():
         return archive_element
 
     def evaluate_action_for_one_individual_rotate_around_joint(self, action, multi_thread, individual_genotype, simulator_scene_simulation, generation_mode, result_queue):
-        nbr_item_joint_studied = 4
+        nbr_item_joint_studied = 1 # attention depend de l objet
         radius = None
         start_angle = 128
         stop_angle = 150
         geometric_debug=True
-        direction = "negative" #"negative"
+        direction = "positive" #"negative"
         difference_init_end_action_joint_value = apply_rotation_arround_articulation(nbr_item_joint_studied=nbr_item_joint_studied,
                                                                                      multi_thread=None,
                                                                                      sim_scene=simulator_scene_simulation,
