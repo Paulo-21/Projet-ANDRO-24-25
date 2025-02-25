@@ -55,19 +55,12 @@ class Individual():
             result_queue.put(archive_element)
         return archive_element
 
-    def evaluate_action_for_one_individual_rotate_around_joint(self, action, multi_thread, individual_genotype, simulator_scene_simulation, generation_mode, result_queue):
-        nbr_item_joint_studied = 1 # attention depend de l objet
-        radius = None
-        start_angle = 128
-        stop_angle = 150
+    def evaluate_action_for_one_individual_rotate_around_joint(self, action, multi_thread, individual_genotype, simulator_scene_simulation, generation_mode, result_queue, nbr_item_joint_studied):
         geometric_debug=True
         direction = "positive" #"negative"
         difference_init_end_action_joint_value = apply_rotation_arround_articulation(nbr_item_joint_studied=nbr_item_joint_studied,
-                                                                                     multi_thread=None,
+                                                                                     multi_thread=multi_thread,
                                                                                      sim_scene=simulator_scene_simulation,
-                                                                                     radius=radius,
-                                                                                     start_angle=start_angle,
-                                                                                     stop_angle=stop_angle,
                                                                                      geometric_debug=geometric_debug,
                                                                                      direction=direction)
 
@@ -121,7 +114,7 @@ class Individual():
         return archive_element
 
 
-    def evaluate_action_for_one_individual(self, simulator_scene_simualtion, individual_genotype, result_queue, archive, generation_mode,simulator, multi_thread):
+    def evaluate_action_for_one_individual(self, simulator_scene_simualtion, individual_genotype, result_queue, archive, generation_mode,simulator, multi_thread, nbr_item_joint_studied):
         simulator_scene_simualtion.load_object(multi_thread=multi_thread)
         simulator_scene_simualtion.load_robot(individual_genotype,multi_thread=multi_thread)
         simulator_scene_simualtion.define_joint_and_scalar_to_activate_close_action()
@@ -154,7 +147,8 @@ class Individual():
                                                                                                individual_genotype=individual_genotype,
                                                                                                simulator_scene_simulation=simulator_scene_simualtion,
                                                                                                generation_mode=generation_mode,
-                                                                                               result_queue=result_queue)
+                                                                                               result_queue=result_queue,
+                                                                                               nbr_item_joint_studied=nbr_item_joint_studied)
 
 
             else :

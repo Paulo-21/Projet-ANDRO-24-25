@@ -82,6 +82,20 @@ class Population(Individual):
             tensor_fitness_info = simulator_scene_simualtion.push_action( action=action,multi_thread="GPU_parallel")
             archive_element_from_one_tensor = self.affect_fitness_from_difference_int_end_action_joint_tensor_scene_push_action(
                 fitness_info=tensor_fitness_info)
+        elif action== "rotate_around_joint":
+            geometric_debug = True
+            direction = "positive"  # "negative"
+            nbr_item_joint_studied=1
+            tensor_fitness_info = simulator_scene_simualtion.apply_rotation_arround_articulation(
+                nbr_item_joint_studied=nbr_item_joint_studied,
+                multi_thread="GPU_parallel",
+                sim_scene=simulator_scene_simualtion,
+                geometric_debug=geometric_debug,
+                direction=direction)
+
+
+            self.affect_fitness_from_difference_int_end_action_joint_tensor_scene_push_action(
+                fitness_info=tensor_fitness_info)
         else :
             raise ValueError("pas bonne action")
         return archive_element_from_one_tensor

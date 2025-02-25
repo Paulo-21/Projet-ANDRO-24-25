@@ -23,4 +23,7 @@ def genesis_action_achitecture(simulation_scene_simulator, action):
     elif action == "push_right":
         joint_action_indx = simulation_scene_simulator.translationX_items_number
         scalar_push_value = -1 * scale_push_motion
+    elif action == "push_right":
+        joint_action_indx = simulation_scene_simulator.translationX_items_number
+        scalar_push_value = -1 * scale_push_motion
     return scalar_push_value,joint_action_indx

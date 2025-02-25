@@ -18,7 +18,6 @@ from pyquaternion import Quaternion
 import math
 from ..trajectory_motion.colors_const import *
 
-
 def generate_arc(sim_scene,ref_vect_for_arc, u, stop_angle=30, start_angle=0, num_points=100, center_point=0,
         ):
     angles_rad = np.linspace(np.radians(start_angle), np.radians(stop_angle), num_points)
@@ -52,10 +51,11 @@ def rotation_matrix_theta_around_axisU(u,theta_rad):
     return rotation_matrix
 
 
-def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, multi_thread=None, radius=0.02, start_angle=0, stop_angle=90, geometric_debug=True,direction="positive"):
+def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, multi_thread=None,  geometric_debug=True,direction="positive"):
     display_debug_geometry = True
     display_force_array = False
     trajectory_geometric_debug = True #display trajectroy motion
+    debug_opening = True
     if display_debug_geometry:
         nstep=10
     else:
@@ -65,7 +65,6 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
 
     sim_scene.robot.set_dofs_position(np.array([0.035, 0.035]), sim_scene.finger_items_number)
     sim_scene.scene.step()
-    pdb.set_trace()
     array_object_remain_origin = np.array([0, 0, 0, 0, 0, 0])
     control_end_effector_pos = sim_scene.robot.get_pos().cpu().numpy()
 
@@ -157,48 +156,47 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
 
     num_points = 100
     sim_scene.scene.draw_debug_sphere(np.array(O_link_frame_wf), radius=0.1, color=(1.0, 0.0, 0.0, 0.5))
-    if radius==None:
-        O_point_wf = O_link_frame_wf
-        Mprime_point_wf = sim_scene.robot.get_pos().cpu().numpy()
+    O_point_wf = O_link_frame_wf
+    Mprime_point_wf = sim_scene.robot.get_pos().cpu().numpy()
 
-        R_point_wf = O_point_wf + ref_axis_orthogonal_to_active_direction_world_frame
-        R2_point_wf = O_point_wf + ref_axis_orthogonal2_to_active_direction_world_frame
+    R_point_wf = O_point_wf + ref_axis_orthogonal_to_active_direction_world_frame
+    R2_point_wf = O_point_wf + ref_axis_orthogonal2_to_active_direction_world_frame
 
-        A_point_wf = O_point_wf + ref_axis_active_direction_world_frame
-        OA_vect = A_point_wf - O_point_wf
+    A_point_wf = O_point_wf + ref_axis_active_direction_world_frame
+    OA_vect = A_point_wf - O_point_wf
 
-        OR_vect_wf = R_point_wf - O_point_wf
-        OR2_vect_wf = R2_point_wf - O_point_wf
-        OMprime_vect = Mprime_point_wf - O_point_wf
+    OR_vect_wf = R_point_wf - O_point_wf
+    OR2_vect_wf = R2_point_wf - O_point_wf
+    OMprime_vect = Mprime_point_wf - O_point_wf
 
-        sim_scene.scene.draw_debug_arrow(O_point_wf, OMprime_vect, radius=0.006, color=jaune)
+    sim_scene.scene.draw_debug_arrow(O_point_wf, OMprime_vect, radius=0.006, color=jaune)
 
-        OMprime_on_OA_vect= np.dot(OMprime_vect,OA_vect)*OA_vect
-        OMprime_on_R2_vect= np.dot(OMprime_vect,OR2_vect_wf)*OR2_vect_wf
-        OMprime_on_R_vect = np.dot(OMprime_vect,OR_vect_wf)*OR_vect_wf
+    OMprime_on_OA_vect= np.dot(OMprime_vect,OA_vect)*OA_vect
+    OMprime_on_R2_vect= np.dot(OMprime_vect,OR2_vect_wf)*OR2_vect_wf
+    OMprime_on_R_vect = np.dot(OMprime_vect,OR_vect_wf)*OR_vect_wf
 
-        Mprime_on_OA_point= O_point_wf + OMprime_on_OA_vect
-        H_point = Mprime_on_OA_point
-        HMprime_vect  = Mprime_point_wf - H_point
-        Mprime_on_OR2_point =  O_point_wf + OMprime_on_R2_vect
-        Mprime_on_OR_point = O_point_wf + OMprime_on_R_vect
+    Mprime_on_OA_point= O_point_wf + OMprime_on_OA_vect
+    H_point = Mprime_on_OA_point
+    HMprime_vect  = Mprime_point_wf - H_point
+    Mprime_on_OR2_point =  O_point_wf + OMprime_on_R2_vect
+    Mprime_on_OR_point = O_point_wf + OMprime_on_R_vect
 
-        if display_debug_geometry :
+    if display_debug_geometry :
 
-            sim_scene.scene.draw_debug_sphere(Mprime_on_OA_point, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(Mprime_on_OR2_point, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(Mprime_on_OR_point, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(R2_point_wf, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(R_point_wf, radius=0.01, color=mauve)
+        sim_scene.scene.draw_debug_sphere(Mprime_on_OA_point, radius=0.01, color=mauve)
+        sim_scene.scene.draw_debug_sphere(Mprime_on_OR2_point, radius=0.01, color=mauve)
+        sim_scene.scene.draw_debug_sphere(Mprime_on_OR_point, radius=0.01, color=mauve)
+        sim_scene.scene.draw_debug_sphere(R2_point_wf, radius=0.01, color=mauve)
+        sim_scene.scene.draw_debug_sphere(R_point_wf, radius=0.01, color=mauve)
 
-            sim_scene.scene.draw_debug_sphere(H_point, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(Mprime_point_wf, radius=0.01, color=mauve)
+        sim_scene.scene.draw_debug_sphere(H_point, radius=0.01, color=mauve)
+        sim_scene.scene.draw_debug_sphere(Mprime_point_wf, radius=0.01, color=mauve)
 
-            sim_scene.scene.draw_debug_arrow(O_point_wf, OMprime_on_OA_vect, radius=0.006, color=mauve)
-            sim_scene.scene.draw_debug_arrow(O_point_wf, OMprime_on_R2_vect, radius=0.006, color=mauve)
-            sim_scene.scene.draw_debug_arrow(H_point, HMprime_vect, radius=0.006, color=mauve)
-            sim_scene.scene.draw_debug_arrow(O_point_wf, HMprime_vect, radius=0.006, color=mauve)
-            sim_scene.scene.draw_debug_arrow(Mprime_on_OR_point, OMprime_on_R2_vect, radius=0.006, color=mauve)
+        sim_scene.scene.draw_debug_arrow(O_point_wf, OMprime_on_OA_vect, radius=0.006, color=mauve)
+        sim_scene.scene.draw_debug_arrow(O_point_wf, OMprime_on_R2_vect, radius=0.006, color=mauve)
+        sim_scene.scene.draw_debug_arrow(H_point, HMprime_vect, radius=0.006, color=mauve)
+        sim_scene.scene.draw_debug_arrow(O_point_wf, HMprime_vect, radius=0.006, color=mauve)
+        sim_scene.scene.draw_debug_arrow(Mprime_on_OR_point, OMprime_on_R2_vect, radius=0.006, color=mauve)
 
         nom_radius_around_axis = np.linalg.norm(HMprime_vect)
         vect_reference_radius_theta_zero = nom_radius_around_axis * OR2_vect_wf
@@ -215,12 +213,9 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
 
         sim_scene.scene.draw_debug_arrow(H_point, 3*HMprime_vect, radius=0.0006, color=bordeaux)
         sim_scene.scene.draw_debug_arrow(O_point_wf, 3*OMprime_on_R2_vect, radius=0.0006, color=bordeaux)
-        pdb.set_trace()
         sim_scene.scene.draw_debug_arrow(H_point, 3 * HMprime_vect, radius=0.03, color=bordeaux)
         sim_scene.scene.draw_debug_arrow(O_point_wf, 3 * OR2_vect_wf, radius=0.03, color=bordeaux)
         #sim_scene.scene.draw_debug_arrow(O_point_wf, 3 * OMprime_on_R2_vect, radius=0.006, color=bordeaux)
-
-
 
 
         start_angle_deg = theta_rad * 180 / np.pi
@@ -245,7 +240,6 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
             sim_scene.scene.draw_debug_arrow(O_point_wf, start_vect, radius=0.006, color=vert_canard)
             sim_scene.scene.draw_debug_arrow(O_point_wf, stop_vect, radius=0.006, color=vert_canard)
 
-        pdb.set_trace()
         radius = nom_radius_around_axis
         center_point = H_point
     else:
@@ -263,6 +257,10 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
 
 
     if trajectory_geometric_debug:
+        if debug_opening:
+            num_points = 2
+        else:
+            pass
         for i in range(num_points):
             x = x_list[i]
             y = y_list[i]
@@ -280,7 +278,6 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
     sim_scene.robot.set_pos([x_list[n_waypoint], y_list[n_waypoint], z_list[n_waypoint]])
     print("stop debugging, hard force application will start")
 
-    pdb.set_trace()
     n_step = num_points
     init_action_object_joint_values = sim_scene.object.get_qpos()
     if multi_thread != "GPU_parallel":
@@ -293,78 +290,11 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
                 sim_scene.robot.control_dofs_force(np.array([hard_force_appliend_on_fingers, hard_force_appliend_on_fingers]), sim_scene.finger_items_number)
                 sim_scene.object.set_dofs_position(array_object_remain_origin, [0, 1, 2, 3, 4, 5])
                 sim_scene.scene.step()
-            """
-            O_point = init_pose_active_axis
-            M_point = pos_robot_in_trajectory
 
-            R_point = O_point + ref_axis_orthogonal_to_active_direction_world_frame
-
-            A_point = O_point + ref_axis_active_direction_world_frame
-
-            OR_vect = R_point - O_point
-
-            OM_vect = M_point - O_point  #
-
-            OA_vect = A_point - O_point
-
-            norm_OR_vect = OR_vect / np.linalg.norm(OR_vect)
-            norm_OM_vect = OM_vect / np.linalg.norm(OM_vect)
-
-            N_vect = np.cross(norm_OR_vect, norm_OM_vect)
-
-            norm_N_vect = np.linalg.norm(N_vect)
-
-            if geometric_debug:
-
-                sim_scene.scene.draw_debug_sphere(O_point, radius=0.005, color=(1.0, 1.0, 1.0, 0.5))
-                sim_scene.scene.draw_debug_sphere(M_point, radius=0.008, color=(1.0, 1.0, 1.0, 0.5))
-                sim_scene.scene.draw_debug_sphere(A_point, radius=0.005, color=(1.0, 1.0, 1.0, 0.5))
-                sim_scene.scene.draw_debug_sphere(R_point, radius=0.001, color=(1.0, 1, 0.2, 0.5))
-                sim_scene.scene.draw_debug_arrow(O_point, OA_vect, radius=0.006, color=jaune)
-                sim_scene.scene.draw_debug_arrow(M_point, OR_vect, radius=0.006, color=vert_canard)
-                sim_scene.scene.draw_debug_arrow(M_point, OM_vect, radius=0.006, color=mauve)
-                sim_scene.scene.draw_debug_arrow(init_pose_active_axis, OA_vect, radius=0.002, color=(1, 1, 1.0, 1))
-            # sim_scene.scene.clear_debug_objects()
-            if norm_N_vect<10**-6:
-              #  raise Exception("La norme est trop proche de zero, dans ce cas il faut passe la zone, a coder")
-                print("#### step ", i, "over :", n_step)
-                print("Pass option has been used")
-                if (i == (n_step - 1)):
-                    difference_init_end_action_joint_value = sim_scene.how_actionable_grasp(multi_thread=multi_thread,
-                                                                                            init_action_object_joint_values=init_action_object_joint_values)
-            else:
-                print("#### step " , i, "over :",n_step )
-                N_vect_normalized = N_vect / norm_N_vect
-                if geometric_debug:
-                    sim_scene.scene.draw_debug_arrow(init_pose_active_axis, N_vect_normalized, radius=0.02,color=(0, 1, 1.0, 0.5))
-                theta = np.arccos(np.dot(OM_vect, OR_vect) / (LA.norm(OM_vect) * LA.norm(OR_vect)))
-
-                theta_rad_debug = theta * 180 / 3.14
-
-                pyquat_transform_theta_quat = Quaternion(a=N_vect_normalized[0] * np.sin(theta / 2),
-                                                         b=N_vect_normalized[1] * np.sin(theta / 2),
-                                                         c=N_vect_normalized[2] * np.sin(theta / 2),
-                                                         d=np.cos(theta / 2))
-
-                rot = Quaternion(axis=np.array([0, 1, 0]), degrees=180)
-                pyquat_transform_theta_quat_result = rot2 * rot * pyquat_transform_theta_quat
-
-                rotation_matrix_theta = pyquat_transform_theta_quat_result.rotation_matrix
-
-                genesis_quat_result = from_pyquat_to_genesis(pyquat=pyquat_transform_theta_quat_result)
-                print(genesis_quat_result)
-
-                sim_scene.robot.set_quat(genesis_quat_result)
-
-                sim_scene.scene.step()
-                array_object_remain_origin = np.array([0, 0, 0, 0, 0, 0])
-                sim_scene.object.set_dofs_position(array_object_remain_origin, [0, 1, 2, 3, 4, 5])
-                if (i == (n_step - 1)):
-                    difference_init_end_action_joint_value = sim_scene.how_actionable_grasp(multi_thread=multi_thread,
-                                                                                       init_action_object_joint_values=init_action_object_joint_values)
-                sim_scene.scene.step()
-                """
             n_waypoint += 1
+        difference_init_end_action_joint_value = sim_scene.how_actionable_grasp(
+                multi_thread=multi_thread,
+                init_action_object_joint_values=init_action_object_joint_values)
             #sim_scene.scene.clear_debug_objects()
 
     
@@ -385,6 +315,7 @@ def apply_rotation_arround_articulation(sim_scene, nbr_item_joint_studied=3, mul
                     multi_thread=multi_thread,
                     init_action_object_joint_values=torch_init_action_object_joint_values)
     print("last i", i)
+
     return difference_init_end_action_joint_value
 
 
