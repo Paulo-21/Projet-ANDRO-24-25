@@ -18,6 +18,60 @@ from pyquaternion import Quaternion
 import math
 from ..trajectory_motion.colors_const import *
 
+
+
+def rot_mtx_fct( quat_pyquat_simple_array):
+    rotation_matrix = quat_pyquat_simple_array.rotation_matrix
+    return rotation_matrix
+
+def quaternion_product(child_link_quat_pyquat,parent_link_quat_pyquat, child_link_pose_wf):
+        child_link_quat_pyquat =Quaternion(child_link_quat_pyquat)
+        parent_link_quat_pyquat = Quaternion(parent_link_quat_pyquat)
+        child_link_pose_wf = child_link_pose_wf
+
+
+        quat_pyquat = child_link_quat_pyquat * parent_link_quat_pyquat
+        rotation_matrix = quat_pyquat.rotation_matrix
+
+        tx, ty, tz = child_link_pose_wf[0].item(), child_link_pose_wf[1].item(), child_link_pose_wf[
+            2].item()
+        T = [tx, ty, tz]
+        matrice_homogene = concat_rotation_t_matrix(rotation_matrix=rotation_matrix, T=T)
+        quat_pyquat_torch = torch.Tensor(quat_pyquat.q)
+        rotation_matrix_torch = torch.Tensor(rotation_matrix)
+        matrice_homogene_torch = torch.Tensor(matrice_homogene)
+
+        return quat_pyquat_torch,rotation_matrix_torch, matrice_homogene_torch
+
+def concat_rotation_t_matrix(rotation_matrix, T):
+    tx, ty, tz = T[0], T[1], T[2]
+    matrice_homogene = np.array([[rotation_matrix[0][0], rotation_matrix[0][1], rotation_matrix[0][2], tx],
+                                 [rotation_matrix[1][0], rotation_matrix[1][1], rotation_matrix[1][2], ty],
+                                 [rotation_matrix[2][0], rotation_matrix[2][1], rotation_matrix[2][2], tz],
+                                 [0, 0, 0, 1]],
+                                )
+    return matrice_homogene
+
+def quaternion_rotate_vector(q, v):
+    q_conj = q * np.array([1, -1, -1, -1])  # Conjugué du quaternion
+    v_quat = np.concatenate(([0], v))  # Vecteur en quaternion [0, x, y, z]
+
+    v_rotated_quat = quaternion_multiply(quaternion_multiply(q, v_quat), q_conj)
+
+    return v_rotated_quat[1:]
+
+
+def quaternion_multiply(q1, q2):
+    w1, x1, y1, z1 = q1
+    w2, x2, y2, z2 = q2
+    return np.array([
+        w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
+        w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+        w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+        w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+    ])
+
+
 class Trajectory_planner():
     def __init__(self):
         self.test=None
@@ -55,6 +109,42 @@ class Trajectory_planner():
         return rotation_matrix
 
 
+    def get_rotation_mtx(self, multi_thread, child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf):
+        if multi_thread=="GPU_simple":
+            quat_pyquat = child_link_quat_pyquat * parent_link_quat_pyquat
+            rotation_matrix = quat_pyquat.rotation_matrix
+            tx, ty, tz = child_link_pose_wf[0].item(), child_link_pose_wf[1].item(), child_link_pose_wf[2].item()
+            O_link_frame_wf = np.array([tx, ty, tz])
+            T = [tx, ty, tz]
+            matrice_homogene = concat_rotation_t_matrix(rotation_matrix=rotation_matrix, T=T)
+
+        else:
+            parent_link_quat_pyquat_array = parent_link_quat_pyquat
+            child_link_quat_pyquat_array = child_link_quat_pyquat
+            child_link_pose_wf_array = child_link_pose_wf
+            quat_pyquat_torch_concat = torch.empty(0, 4)
+            rotation_matrix_torch_concat =  torch.empty(0, 3,3)
+            matrice_homogene_torch_concat = torch.empty(0, 4,4)
+
+            for i in range(len(child_link_quat_pyquat)):
+                parent_link_quat_pyquat = parent_link_quat_pyquat_array[i].cpu().numpy()
+                child_link_quat_pyquat = child_link_quat_pyquat_array[i].cpu().numpy()
+                child_link_pose_wf = child_link_pose_wf_array[i].cpu().numpy()
+
+                quat_pyquat_torch, rotation_matrix_torch, matrice_homogene_torch = quaternion_product(
+                    child_link_quat_pyquat=child_link_quat_pyquat,
+                    parent_link_quat_pyquat=parent_link_quat_pyquat,
+                    child_link_pose_wf=child_link_pose_wf)#array
+                print("%%%%%%%%%%",i,"%%%%%%")
+                quat_pyquat_torch_concat =  torch.cat((quat_pyquat_torch_concat, quat_pyquat_torch.unsqueeze(0)), dim=0) #torch.stack((quat_pyquat_torch_concat, quat_pyquat_torch ),dim=0)
+                rotation_matrix_torch_concat = torch.cat((rotation_matrix_torch_concat, rotation_matrix_torch.unsqueeze(0)), dim=0)  # torch.stack((rotation_matrix_torch_concat, rotation_matrix_torch), dim=0)
+                matrice_homogene_torch_concat = torch.cat((matrice_homogene_torch_concat, matrice_homogene_torch.unsqueeze(0)), dim=0)  # torch.stack ((matrice_homogene_torch_concat, matrice_homogene_torch), dim=0)
+            matrice_homogene = matrice_homogene_torch_concat
+            quat_pyquat = quat_pyquat_torch_concat
+        return matrice_homogene, quat_pyquat, O_link_frame_wf
+
+
+
     def apply_rotation_arround_articulation(self,sim_scene, nbr_item_joint_studied=3, multi_thread=None,  geometric_debug=True,direction="positive"):
         display_debug_geometry = True
         display_force_array = False
@@ -66,17 +156,11 @@ class Trajectory_planner():
             nstep=1000
         small_force_appliend_on_fingers = -0.05
         hard_force_appliend_on_fingers = -1.5#0-1.5
-
-        sim_scene.robot.set_dofs_position(np.array([0.035, 0.035]), sim_scene.finger_items_number)
-        sim_scene.scene.step()
-        array_object_remain_origin = np.array([0, 0, 0, 0, 0, 0])
-        control_end_effector_pos = sim_scene.robot.get_pos().cpu().numpy()
-
+        sim_scene.command_open_fingers(multi_thread)
         for i in range(nstep):
             print("i = ", i)
-            sim_scene.robot.control_dofs_force(np.array([small_force_appliend_on_fingers,small_force_appliend_on_fingers]), sim_scene.finger_items_number)
-            sim_scene.object.set_dofs_position(array_object_remain_origin, [0, 1, 2, 3, 4, 5])
-            #   sim_scene.robot.set_dofs_position(control_end_effector_pos, [0, 1, 2])
+            sim_scene.apply_force_on_robot(small_force_appliend_on_fingers, multi_thread)
+            sim_scene.command_remain_origin(multi_thread)
             if display_force_array:
                 contact_arrows = sim_scene.robot.get_links_net_contact_force()
                 contact_left_arrow = contact_arrows[1].cpu().numpy()
@@ -88,25 +172,12 @@ class Trajectory_planner():
                 sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_right_arrow, radius=0.0006, color=rouge)
             sim_scene.scene.step()
         print("End of applying small control force")
+        child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf,dof_motion_angle_lf = sim_scene.get_parent_child_info(multi_thread,nbr_item_joint_studied)
+        matrice_homogene, quat_pyquat,O_link_frame_wf = self.get_rotation_mtx( multi_thread, child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf)
+        pdb.set_trace()
+       # torch_matrice_homogene = torch.tile(torch.tensor([100], device=gs.device), (sim_scene.n_envs, 1))
+       # torch_object_remain_origin = torch.tile(torch.tensor([0, 0, 0, 0, 0, 0], device=gs.device),(sim_scene.n_envs, 1))
 
-
-        parent_link_quat = sim_scene.object.links[0].get_quat()
-        parent_link_quat_pyquat = self.from_genesis_quat_to_pyquat(genesis_quat=parent_link_quat)
-
-        child_link_pose_wf = sim_scene.object.links[nbr_item_joint_studied].get_pos()
-        child_link_quat = sim_scene.object.links[nbr_item_joint_studied].get_quat()
-        child_link_quat_pyquat = self.from_genesis_quat_to_pyquat(genesis_quat=child_link_quat)
-
-        dof_motion_angle_lf = sim_scene.object.joints[nbr_item_joint_studied]._dofs_motion_ang
-
-        quat_pyquat = child_link_quat_pyquat * parent_link_quat_pyquat
-
-        rotation_matrix = quat_pyquat.rotation_matrix
-        tx, ty, tz = child_link_pose_wf[0].item(), child_link_pose_wf[1].item(), child_link_pose_wf[2].item()
-        O_link_frame_wf = np.array([tx, ty, tz])
-        T = [tx, ty, tz]
-
-        matrice_homogene = self.concat_rotation_t_matrix(rotation_matrix=rotation_matrix, T=T)
         if geometric_debug:
          sim_scene.scene.draw_debug_frame(matrice_homogene, axis_length=2, origin_size=0.015, axis_radius=0.001)
 
@@ -141,12 +212,25 @@ class Trajectory_planner():
             raise Exception('erreur dans l affectation de l axe actif')
 
 
-
         ref_axis_orthogonal_to_active_direction_world_frame = quat_pyquat.rotate(
             ref_axis_orthogonal_to_active_direction_local_frame)
         ref_axis_orthogonal2_to_active_direction_world_frame = quat_pyquat.rotate(
             ref_axis_orthogonal2_to_active_direction_local_frame)
         ref_axis_active_direction_world_frame = quat_pyquat.rotate(ref_axis_active_direction_local_frame)
+
+        quat_array= np.array([quat_pyquat[0],quat_pyquat[1],quat_pyquat[2],quat_pyquat[3]])
+        ref_axis_orthogonal_to_active_direction_world_frame2 = quaternion_rotate_vector(
+            quat_array,
+            ref_axis_orthogonal_to_active_direction_local_frame)
+        ref_axis_orthogonal2_to_active_direction_world_frame2 = quaternion_rotate_vector(
+            quat_array,
+            ref_axis_orthogonal2_to_active_direction_local_frame)
+        ref_axis_active_direction_world_frame2 = quaternion_rotate_vector(
+            quat_array,
+            ref_axis_active_direction_local_frame)
+
+
+        pdb.set_trace()
 
 
         ref_X_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_x)
@@ -287,12 +371,11 @@ class Trajectory_planner():
         if multi_thread != "GPU_parallel":
             for i in range(n_step):
                 pos_robot_in_trajectory = [x_list[n_waypoint], y_list[n_waypoint], z_list[n_waypoint]]
-                #sim_scene.robot.set_pos(pos_robot_in_trajectory)
                 sim_scene.robot.set_dofs_kp(kp=np.array([100, 100, 100]),dofs_idx_local=[0, 1, 2] )
                 sim_scene.robot.control_dofs_position(np.array(pos_robot_in_trajectory), [0, 1, 2])
                 for _ in range(100):
                     sim_scene.robot.control_dofs_force(np.array([hard_force_appliend_on_fingers, hard_force_appliend_on_fingers]), sim_scene.finger_items_number)
-                    sim_scene.object.set_dofs_position(array_object_remain_origin, [0, 1, 2, 3, 4, 5])
+                    sim_scene.object.set_dofs_position([0, 0, 0, 0, 0, 0], [0, 1, 2, 3, 4, 5])
                     sim_scene.scene.step()
 
                 n_waypoint += 1
@@ -329,21 +412,11 @@ class Trajectory_planner():
             nbr_item_joint_studied=index_object_articulation)
 
 
-    def concat_rotation_t_matrix(self,rotation_matrix, T):
-        tx, ty, tz = T[0], T[1], T[2]
-        matrice_homogene = np.array([[rotation_matrix[0][0], rotation_matrix[0][1], rotation_matrix[0][2], tx],
-                                     [rotation_matrix[1][0], rotation_matrix[1][1], rotation_matrix[1][2], ty],
-                                     [rotation_matrix[2][0], rotation_matrix[2][1], rotation_matrix[2][2], tz],
-                                     [0, 0, 0, 1]],
-                                    )
-        return matrice_homogene
+
 
     def from_pyquat_to_genesis(self,pyquat):
         genesis_quat = np.array([pyquat[3], pyquat[0], pyquat[1], pyquat[2]])
         return genesis_quat
 
 
-    def from_genesis_quat_to_pyquat(self,genesis_quat):
-        pyquat = Quaternion(genesis_quat[1], genesis_quat[2], genesis_quat[3], genesis_quat[0])
-        return pyquat
 

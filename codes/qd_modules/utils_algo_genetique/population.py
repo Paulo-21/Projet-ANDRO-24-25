@@ -89,7 +89,6 @@ class Population(Individual):
             direction = "positive"  # "negative"
             nbr_item_joint_studied=1
             my_trajectory_planner = Trajectory_planner()
-            pdb.set_trace()
             tensor_fitness_info = my_trajectory_planner.apply_rotation_arround_articulation(
                 nbr_item_joint_studied=nbr_item_joint_studied,
                 multi_thread="GPU_parallel",

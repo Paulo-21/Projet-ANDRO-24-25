@@ -18,6 +18,7 @@ from pyquaternion import Quaternion
 import math
 from ..trajectory_motion import *
 
+
 class Genesis_scene_simulation():
     def __init__(self, gripper, object_to_grasp):
         self.gripper = gripper
@@ -121,7 +122,7 @@ class Genesis_scene_simulation():
                                ), )
             print("##### begin build parallel")
             self.n_envs = pop_size
-            self.scene.build(n_envs=self.n_envs, env_spacing=(5.0, 5.0))
+            self.scene.build(n_envs=self.n_envs,) # env_spacing=(5.0, 5.0)
             print("##### end build parallel")
         else :
             torch_pos = torch.tile(torch.tensor([0, 0, 0], device=gs.device), (self.n_envs, 1))
@@ -157,10 +158,11 @@ class Genesis_scene_simulation():
             vis_options=gs.options.VisOptions(
                 show_world_frame=True,  # visualize the coordinate frame of `world` at its origin
                 world_frame_size=1.0,  # length of the world frame in meter
-                show_link_frame=True,  # do not visualize coordinate frames of entity links
+                show_link_frame=False,  # do not visualize coordinate frames of entity links
                 show_cameras=True,  # do not visualize mesh and frustum of the cameras added
                 plane_reflection=True,  # turn on plane reflection
                 ambient_light=(0.1, 0.1, 0.1),  # ambient light setting
+                n_rendered_envs=1,
             ),
 
         )
@@ -378,6 +380,70 @@ class Genesis_scene_simulation():
         tensor_pop_quat_elements = torch.tensor(quat_list, dtype=torch.float64)
         self.robot.set_pos(tensor_pop_pos_elements)
         self.robot.set_quat(tensor_pop_quat_elements)
+
+    def command_remain_origin(self, multi_thread):
+        dof_idx_local =  [0, 1, 2, 3, 4, 5]
+        position = [0, 0, 0, 0, 0, 0]
+        if multi_thread=="GPU_simple":
+            array_object_remain_origin = np.array(position)
+            self.object.set_dofs_position(array_object_remain_origin, dof_idx_local)
+        else:
+            torch_remain_origin = torch.tile(torch.tensor(position, device=gs.device), (self.n_envs, 1))
+            self.object.set_dofs_position(torch_remain_origin, dof_idx_local)
+        self.scene.step()
+
+    def command_open_fingers(self, multi_thread):
+        if multi_thread == "GPU_simple":
+            self.robot.set_dofs_position(np.array([0.035, 0.035]), self.finger_items_number)
+
+        if multi_thread == "GPU_parallel":
+            torch_open = torch.tile(torch.tensor([0.035, 0.035], device=gs.device), (self.n_envs, 1))
+            self.robot.set_dofs_position(torch_open, self.finger_items_number)
+        self.scene.step()
+
+    def get_parent_child_info(self, multi_thread, nbr_item_joint_studied):
+        parent_link_quat = self.object.links[0].get_quat()
+        parent_link_quat_pyquat = self.from_genesis_quat_to_pyquat(genesis_quat=parent_link_quat, multi_thread=multi_thread)
+
+        child_link_pose_wf = self.object.links[nbr_item_joint_studied].get_pos()
+        child_link_quat = self.object.links[nbr_item_joint_studied].get_quat()
+        child_link_quat_pyquat = self.from_genesis_quat_to_pyquat(genesis_quat=child_link_quat, multi_thread=multi_thread)
+
+        dof_motion_angle_lf = self.object.joints[nbr_item_joint_studied]._dofs_motion_ang
+
+
+        return child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf,dof_motion_angle_lf
+
+
+    def from_genesis_quat_to_pyquat(self,genesis_quat, multi_thread):
+        genesis_quat_save = genesis_quat
+        if multi_thread=="GPU_simple":
+            pyquat = Quaternion(genesis_quat[1], genesis_quat[2], genesis_quat[3], genesis_quat[0])
+        else :
+            for i in range(len(genesis_quat)):
+                print(i)
+                print(genesis_quat[i][1].item())
+            genesis_quat[:, [0, -1]] = genesis_quat[:, [-1, 0]]
+            genesis_quat[:, [1, 0]] = genesis_quat[:, [0, 1]]
+            genesis_quat[:, [1, 2]] = genesis_quat[:, [2, 1]]
+            pyquat = genesis_quat
+
+        return pyquat
+
+    def apply_force_on_robot(self, small_force_appliend_on_fingers, multi_thread):
+        force_input = [small_force_appliend_on_fingers, small_force_appliend_on_fingers]
+        if multi_thread=="GPU_simple":
+            self.robot.control_dofs_force(np.array(force_input),
+                                               self.finger_items_number)
+        elif multi_thread=="GPU_parallel" :
+            torch_force_on_robot = torch.tile(torch.tensor(force_input, device=gs.device), (self.n_envs, 1))
+            self.robot.set_dofs_position(torch_force_on_robot, self.finger_items_number)
+        else:
+            raise ValueError("PB GPU mode")
+
+
+
+
 
 
 
