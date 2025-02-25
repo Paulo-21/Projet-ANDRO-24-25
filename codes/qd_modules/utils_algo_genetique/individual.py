@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 import pandas as pd
 import csv
-from ..trajectory_motion.trajectory_motion import *
+from ..trajectory_motion.trajectory_planner import Trajectory_planner
 
 
 class Individual():
@@ -58,7 +58,8 @@ class Individual():
     def evaluate_action_for_one_individual_rotate_around_joint(self, action, multi_thread, individual_genotype, simulator_scene_simulation, generation_mode, result_queue, nbr_item_joint_studied):
         geometric_debug=True
         direction = "positive" #"negative"
-        difference_init_end_action_joint_value = apply_rotation_arround_articulation(nbr_item_joint_studied=nbr_item_joint_studied,
+        my_trajectory_planner = Trajectory_planner()
+        difference_init_end_action_joint_value = my_trajectory_planner.apply_rotation_arround_articulation(nbr_item_joint_studied=nbr_item_joint_studied,
                                                                                      multi_thread=multi_thread,
                                                                                      sim_scene=simulator_scene_simulation,
                                                                                      geometric_debug=geometric_debug,

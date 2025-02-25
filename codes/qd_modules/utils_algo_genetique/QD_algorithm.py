@@ -48,6 +48,7 @@ class QD_algorithm(Individual):
             multi_thread=self.multi_thread,
             generation_mode=self.generation_mode,
             simulator=self.simu,
+            nbr_item_joint_studied=self.nbr_item_joint_studied
         )
 
     def genereation_iteration_process(self):
@@ -65,7 +66,8 @@ class QD_algorithm(Individual):
                 instance_of_archive=self.archive,
                 multi_thread=self.multi_thread,
                 generation_mode=self.generation_mode,
-                simulator=self.simu)
+                simulator=self.simu,
+            nbr_item_joint_studied=self.nbr_item_joint_studied)
         self.archive.store_archive_in_csv(action_mode=self.dynamic_application)
         print('end_generation')
 

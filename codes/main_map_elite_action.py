@@ -63,6 +63,7 @@ def main():
     artificial_bb = 2 * 0.5 # TODO Faire une bounding box de la taille
 
     multi_thread, render_mode, generation_mode, version, replay_indx, obj_name, action= argument_management()
+
     my_QD_algo = QD_algorithm(Name="Fist_name",
             biased_selection = True,
             nb_generations=3000,
@@ -78,7 +79,8 @@ def main():
             artificial_bb = artificial_bb,
             replay_indx=replay_indx,
             version = version,
-            simu=simu)
+            simu=simu,
+            nbr_item_joint_studied=1)
     my_QD_algo.init_QD_algo()
     my_QD_algo.first_generation()
     my_QD_algo.genereation_iteration_process()

@@ -4,6 +4,8 @@ import numpy as np
 from .individual import Individual
 import multiprocessing
 import torch
+from ..trajectory_motion.trajectory_planner import Trajectory_planner
+
 
 
 class Population(Individual):
@@ -43,12 +45,12 @@ class Population(Individual):
             self.pop_list = np.concatenate((pose, pop_unormalized))
         return self.pop_list
 
-    def evaluate_population(self, simulator_scene_simualtion, instance_of_archive, multi_thread, generation_mode, simulator):
+    def evaluate_population(self, simulator_scene_simualtion, instance_of_archive, multi_thread, generation_mode, simulator, nbr_item_joint_studied):
         if multi_thread=="CPU_simple" or multi_thread=="GPU_simple":
             i=0
             for individual_genotype in self.pop_list:
                 print("individual nbr :", i)
-                archive_element = self.evaluate_action_for_one_individual(simulator_scene_simualtion=simulator_scene_simualtion, individual_genotype=individual_genotype,result_queue=None, generation_mode=generation_mode, archive=instance_of_archive, simulator=simulator, multi_thread=multi_thread)
+                archive_element = self.evaluate_action_for_one_individual(simulator_scene_simualtion=simulator_scene_simualtion, individual_genotype=individual_genotype,result_queue=None, generation_mode=generation_mode, archive=instance_of_archive, simulator=simulator, multi_thread=multi_thread,nbr_item_joint_studied=nbr_item_joint_studied)
                 instance_of_archive.store_one_new_element_in_archive(archive_element)
                 i+=1
         elif multi_thread=="CPU_multi_thread" :
@@ -86,7 +88,9 @@ class Population(Individual):
             geometric_debug = True
             direction = "positive"  # "negative"
             nbr_item_joint_studied=1
-            tensor_fitness_info = simulator_scene_simualtion.apply_rotation_arround_articulation(
+            my_trajectory_planner = Trajectory_planner()
+            pdb.set_trace()
+            tensor_fitness_info = my_trajectory_planner.apply_rotation_arround_articulation(
                 nbr_item_joint_studied=nbr_item_joint_studied,
                 multi_thread="GPU_parallel",
                 sim_scene=simulator_scene_simualtion,
