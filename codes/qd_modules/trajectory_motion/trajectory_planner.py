@@ -18,15 +18,25 @@ from pyquaternion import Quaternion
 import math
 from ..trajectory_motion.colors_const import *
 
+def cross_torch(a,b):
+    batched_function = torch.vmap(torch_cross_multi_dim, in_dims=(0, 0))
+    result = batched_function(a, b)
+    return result
 
-def dot_torch_capsule(a, b):
+def dot_torch(a,b):
     batched_function = torch.vmap(torch_dot_multi_dim, in_dims=(0, 0))
     result = batched_function(a, b)
+    return result
+
+def dot_torch_capsule(a, b):
+    result = dot_torch(a, b)
     to_mult = result.unsqueeze(1)
     final = to_mult * b
     return final
 def torch_dot_multi_dim(a,b):
     return  torch.dot(a,b)
+def torch_cross_multi_dim(a,b):
+    return torch.cross(a, b)
 
 def torch_quaternion_rotate_vector(quat,v_torch):
     q_conj = quat * torch.tensor([1, -1, -1, -1], dtype=quat.dtype, device=quat.device) # Conjugué du quaternion
@@ -206,12 +216,6 @@ class Trajectory_planner():
         child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf,dof_motion_angle_lf = sim_scene.get_parent_child_info(multi_thread,nbr_item_joint_studied)
         matrice_homogene, quat_pyquat,O_link_frame_wf = self.get_rotation_mtx( multi_thread, child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf)
 
-
-        """
-        if geometric_debug:
-         sim_scene.scene.draw_debug_frame(matrice_homogene[0], axis_length=2, origin_size=0.015, axis_radius=0.001)
-         """
-
         B = np.absolute(dof_motion_angle_lf) #si valeur absolue est - ou plsu va changer
         value_active_axis_local_ref = np.argmax(B)
         sign = np.sign(dof_motion_angle_lf[0][value_active_axis_local_ref])
@@ -298,7 +302,6 @@ class Trajectory_planner():
                                              color=(0, 0, 1.0, 0.5))
             sim_scene.scene.draw_debug_sphere(O_link_frame_wf_debug, radius=0.1, color=(1.0, 0.0, 0.0, 0.5))
 
-
         num_points = 100
         O_point_wf = O_link_frame_wf
         if multi_thread=="GPU_simple":
@@ -324,19 +327,15 @@ class Trajectory_planner():
             O_point_wf_debug =O_point_wf.cpu()[0].numpy()
             OMprime_vect_debug =  OMprime_vect.cpu()[0].numpy()
         sim_scene.scene.draw_debug_arrow(O_point_wf_debug, OMprime_vect_debug, radius=0.006, color=jaune)
-        pdb.set_trace()
-
+        # Projete dans le repere de l articulation
         if multi_thread=="GPU_simple":
             OMprime_on_OA_vect = np.dot(OMprime_vect, OA_vect) * OA_vect
-            pdb.set_trace()
+            OMprime_on_R2_vect = np.dot(OMprime_vect, OR2_vect_wf) * OR2_vect_wf
+            OMprime_on_R_vect = np.dot(OMprime_vect, OR_vect_wf) * OR_vect_wf
         if multi_thread=="GPU_parallel":
             OMprime_on_OA_vect = dot_torch_capsule(a=OMprime_vect,b=OA_vect)
-            pdb.set_trace()
-
-
-
-        OMprime_on_R2_vect= np.dot(OMprime_vect,OR2_vect_wf)*OR2_vect_wf
-        OMprime_on_R_vect = np.dot(OMprime_vect,OR_vect_wf)*OR_vect_wf
+            OMprime_on_R2_vect = dot_torch_capsule(a=OMprime_vect, b=OR2_vect_wf)
+            OMprime_on_R_vect = dot_torch_capsule(a=OMprime_vect, b=OR_vect_wf)
 
         Mprime_on_OA_point= O_point_wf + OMprime_on_OA_vect
         H_point = Mprime_on_OA_point
@@ -344,80 +343,130 @@ class Trajectory_planner():
         Mprime_on_OR2_point =  O_point_wf + OMprime_on_R2_vect
         Mprime_on_OR_point = O_point_wf + OMprime_on_R_vect
 
+        if multi_thread == "GPU_simple":
+            Mprime_on_OA_point_debug = Mprime_on_OA_point
+            Mprime_on_OR2_point_debug = Mprime_on_OR2_point
+            Mprime_on_OR_point_debug = Mprime_on_OR_point
+            R2_point_wf_debug = R2_point_wf
+            R_point_wf_debug = R_point_wf
+            H_point_debug = H_point
+            Mprime_point_wf_debug = Mprime_point_wf
+            OMprime_on_OA_vect_debug = OMprime_on_OA_vect
+            OMprime_on_R2_vect_debug = OMprime_on_R2_vect
+            HMprime_vect_debug = HMprime_vect
+            HMprime_vect_debug = HMprime_vect
+            OMprime_on_R2_vect_debug = OMprime_on_R2_vect
+            OR2_vect_wf_debug =  OR2_vect_wf
+        elif multi_thread == "GPU_parallel":
+            Mprime_on_OA_point_debug = Mprime_on_OA_point[0].cpu().numpy()
+            Mprime_on_OR2_point_debug = Mprime_on_OR2_point[0].cpu().numpy()
+            Mprime_on_OR_point_debug = Mprime_on_OR_point[0].cpu().numpy()
+            R2_point_wf_debug = R2_point_wf[0].cpu().numpy()
+            R_point_wf_debug = R_point_wf[0].cpu().numpy()
+            H_point_debug = H_point[0].cpu().numpy()
+            Mprime_point_wf_debug = Mprime_point_wf[0].cpu().numpy()
+            OMprime_on_OA_vect_debug = OMprime_on_OA_vect[0].cpu().numpy()
+            OMprime_on_R2_vect_debug = OMprime_on_R2_vect[0].cpu().numpy()
+            HMprime_vect_debug = HMprime_vect[0].cpu().numpy()
+            HMprime_vect_debug = HMprime_vect[0].cpu().numpy()
+            OMprime_on_R2_vect_debug = OMprime_on_R2_vect[0].cpu().numpy()
+            OR2_vect_wf_debug =  OR2_vect_wf[0].cpu().numpy()
+        else :
+            raise ValueError("pb multi thread")
         if display_debug_geometry :
-            sim_scene.scene.draw_debug_sphere(Mprime_on_OA_point, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(Mprime_on_OR2_point, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(Mprime_on_OR_point, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(R2_point_wf, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(R_point_wf, radius=0.01, color=mauve)
+            sim_scene.scene.draw_debug_sphere(Mprime_on_OA_point_debug, radius=0.01, color=mauve)
+            sim_scene.scene.draw_debug_sphere(Mprime_on_OR2_point_debug, radius=0.01, color=mauve)
+            sim_scene.scene.draw_debug_sphere(Mprime_on_OR_point_debug, radius=0.01, color=mauve)
+            sim_scene.scene.draw_debug_sphere(R2_point_wf_debug, radius=0.01, color=mauve)
+            sim_scene.scene.draw_debug_sphere(R_point_wf_debug, radius=0.01, color=mauve)
 
-            sim_scene.scene.draw_debug_sphere(H_point, radius=0.01, color=mauve)
-            sim_scene.scene.draw_debug_sphere(Mprime_point_wf, radius=0.01, color=mauve)
+            sim_scene.scene.draw_debug_sphere(H_point_debug, radius=0.01, color=mauve)
+            sim_scene.scene.draw_debug_sphere(Mprime_point_wf_debug, radius=0.01, color=mauve)
 
-            sim_scene.scene.draw_debug_arrow(O_point_wf, OMprime_on_OA_vect, radius=0.006, color=mauve)
-            sim_scene.scene.draw_debug_arrow(O_point_wf, OMprime_on_R2_vect, radius=0.006, color=mauve)
-            sim_scene.scene.draw_debug_arrow(H_point, HMprime_vect, radius=0.006, color=mauve)
-            sim_scene.scene.draw_debug_arrow(O_point_wf, HMprime_vect, radius=0.006, color=mauve)
-            sim_scene.scene.draw_debug_arrow(Mprime_on_OR_point, OMprime_on_R2_vect, radius=0.006, color=mauve)
-
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, OMprime_on_OA_vect_debug, radius=0.006, color=mauve)
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, OMprime_on_R2_vect_debug, radius=0.006, color=mauve)
+            sim_scene.scene.draw_debug_arrow(H_point_debug, HMprime_vect_debug, radius=0.006, color=mauve)
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, HMprime_vect_debug, radius=0.006, color=mauve)
+            sim_scene.scene.draw_debug_arrow(Mprime_on_OR_point_debug, OMprime_on_R2_vect_debug, radius=0.006, color=mauve)
+        if multi_thread=="GPU_simple":
             nom_radius_around_axis = np.linalg.norm(HMprime_vect)
             vect_reference_radius_theta_zero = nom_radius_around_axis * OR2_vect_wf
+            theta_rad = np.arccos(
+                np.dot(OR2_vect_wf, HMprime_vect) / (np.linalg.norm(OR2_vect_wf) * np.linalg.norm(HMprime_vect)))
 
-            theta_rad=np.arccos(np.dot(OR2_vect_wf,HMprime_vect)/(np.linalg.norm(OR2_vect_wf)*np.linalg.norm(HMprime_vect)))
+
+        elif multi_thread=="GPU_parallel":
+            nom_radius_around_axis = torch.norm(HMprime_vect, dim=1)
+            vect_reference_radius_theta_zero = nom_radius_around_axis.unsqueeze(1) * OR2_vect_wf
+            A = dot_torch(a=OR2_vect_wf, b=HMprime_vect).unsqueeze(1)
+            B = torch.norm(OR2_vect_wf, dim=1).unsqueeze(1)
+            C =  torch.norm(HMprime_vect, dim=1).unsqueeze(1)
+            D = B * C
+            E  = A/D
+            theta_rad = torch.acos(E)
+
+        if multi_thread=="GPU_simple":
             rot_vect_in_wf = np.cross(OR2_vect_wf,HMprime_vect)
             value_rot_axis_local_ref = np.argmax(np.abs(rot_vect_in_wf))
             sign_rot = np.sign(rot_vect_in_wf[value_rot_axis_local_ref])
 
             value_active_axis_local_ref = np.argmax(np.abs(OA_vect))
             sign_active_axis = np.sign(OA_vect[value_active_axis_local_ref])
-            if sign_active_axis!=sign_rot:
-                theta_rad=-theta_rad
+            if sign_active_axis != sign_rot:
+                theta_rad = -theta_rad
+        else :
+            rot_vect_in_wf = cross_torch(OR2_vect_wf, HMprime_vect)
+            A =  torch.abs(rot_vect_in_wf)
+            value_rot_axis_local_ref = torch.argmax(A,dim=1)
+            B = rot_vect_in_wf[torch.arange(rot_vect_in_wf.size(0)), value_rot_axis_local_ref]
+            sign_rot = torch.sign(B)
 
-            sim_scene.scene.draw_debug_arrow(H_point, 3*HMprime_vect, radius=0.0006, color=bordeaux)
-            sim_scene.scene.draw_debug_arrow(O_point_wf, 3*OMprime_on_R2_vect, radius=0.0006, color=bordeaux)
-            sim_scene.scene.draw_debug_arrow(H_point, 3 * HMprime_vect, radius=0.03, color=bordeaux)
-            sim_scene.scene.draw_debug_arrow(O_point_wf, 3 * OR2_vect_wf, radius=0.03, color=bordeaux)
-            #sim_scene.scene.draw_debug_arrow(O_point_wf, 3 * OMprime_on_R2_vect, radius=0.006, color=bordeaux)
+            A = torch.abs(OA_vect)
+            value_active_axis_local_ref =  torch.argmax(A,dim=1)
+            B = OA_vect[torch.arange(OA_vect.size(0)), value_active_axis_local_ref]
+            sign_active_axis = torch.sign(B)
+
+            mask = sign_active_axis != sign_rot
+            theta_rad[mask] = -theta_rad[mask]
 
 
-            start_angle_deg = theta_rad * 180 / np.pi
+
+        sim_scene.scene.draw_debug_arrow(H_point_debug, 3*HMprime_vect_debug, radius=0.0006, color=bordeaux)
+        sim_scene.scene.draw_debug_arrow(O_point_wf_debug, 3*OMprime_on_R2_vect_debug, radius=0.0006, color=bordeaux)
+        sim_scene.scene.draw_debug_arrow(H_point_debug, 3 * HMprime_vect_debug, radius=0.03, color=bordeaux)
+        sim_scene.scene.draw_debug_arrow(O_point_wf_debug, 3 * OR2_vect_wf_debug, radius=0.03, color=bordeaux)
+        #sim_scene.scene.draw_debug_arrow(O_point_wf, 3 * OMprime_on_R2_vect, radius=0.006, color=bordeaux)
+
+
+        start_angle_deg = theta_rad * 180 / np.pi
+        if multi_thread=="GPU_simple":
             delta_deg_angle = 45
+        else :
 
-            if direction=="positive":
-                stop_angle_deg = start_angle_deg + delta_deg_angle
-            elif direction=="negative":
-                stop_angle_deg = start_angle_deg - delta_deg_angle
-            else:
-                raise TypeError('No good direction given')
+        pdb.set_trace()
+        #TODO : Ajouter +45 a chacund es element test =torch.tensor([45,45,45], device="cuda")
 
-            stop_angle_rad = stop_angle_deg*np.pi/180
-
-            test_lispace = np.linspace(0,theta_rad,20)
-            for theta_rad in test_lispace:
-                rotation_matrix_start = self.rotation_matrix_theta_around_axisU(u=OA_vect, theta_rad=theta_rad)
-                rotation_matrix_stop = self.rotation_matrix_theta_around_axisU(u=OA_vect, theta_rad=stop_angle_rad)
-                start_vect  = np.dot(rotation_matrix_start, vect_reference_radius_theta_zero)
-                stop_vect = np.dot(rotation_matrix_stop, vect_reference_radius_theta_zero)
-
-                sim_scene.scene.draw_debug_arrow(O_point_wf, start_vect, radius=0.006, color=vert_canard)
-                sim_scene.scene.draw_debug_arrow(O_point_wf, stop_vect, radius=0.006, color=vert_canard)
-
-            radius = nom_radius_around_axis
-            center_point = H_point
+        if direction=="positive":
+            stop_angle_deg = start_angle_deg + delta_deg_angle
+        elif direction=="negative":
+            stop_angle_deg = start_angle_deg - delta_deg_angle
         else:
-            center_point = O_point_wf
-            start_angle_deg =10
-            stop_angle_deg =20
+            raise TypeError('No good direction given')
 
-        x_list, y_list, z_list = self.generate_arc( sim_scene=sim_scene,
-                                               ref_vect_for_arc=vect_reference_radius_theta_zero,
-                                               u=OA_vect,
-                                               stop_angle = stop_angle_deg,
-                                               start_angle = start_angle_deg,
-                                               num_points = 100,
-                                               center_point = H_point)
+        stop_angle_rad = stop_angle_deg*np.pi/180
 
+        test_lispace = np.linspace(0,theta_rad,20)
+        for theta_rad in test_lispace:
+            rotation_matrix_start = self.rotation_matrix_theta_around_axisU(u=OA_vect, theta_rad=theta_rad)
+            rotation_matrix_stop = self.rotation_matrix_theta_around_axisU(u=OA_vect, theta_rad=stop_angle_rad)
+            start_vect  = np.dot(rotation_matrix_start, vect_reference_radius_theta_zero)
+            stop_vect = np.dot(rotation_matrix_stop, vect_reference_radius_theta_zero)
 
+            sim_scene.scene.draw_debug_arrow(O_point_wf, start_vect, radius=0.006, color=vert_canard)
+            sim_scene.scene.draw_debug_arrow(O_point_wf, stop_vect, radius=0.006, color=vert_canard)
+
+        radius = nom_radius_around_axis
+        center_point = H_point
         if trajectory_geometric_debug:
 
             for i in range(num_points):
@@ -454,25 +503,7 @@ class Trajectory_planner():
                     multi_thread=multi_thread,
                     init_action_object_joint_values=init_action_object_joint_values)
                 #sim_scene.scene.clear_debug_objects()
-
-
-        else:
-            #TODO (A faire plus tard en torch...)
-            torch_init_action_object_joint_values = sim_scene.object.get_qpos()
-            for i in range(n_step):
-                torch_push = torch.tile(torch.tensor([100], device=gs.device), (sim_scene.n_envs, 1))
-                torch_object_remain_origin = torch.tile(torch.tensor([0, 0, 0, 0, 0, 0], device=gs.device),
-                                                        (sim_scene.n_envs, 1))
-                sim_scene.object.set_dofs_position(torch_object_remain_origin, [0, 1, 2, 3, 4, 5])
-                sim_scene.robot.control_dofs_force(torch_push, [self.joint_action_indx])
-                sim_scene.scene.step()
-                revolute_joint_axis = 0
-
-                if i == (n_step - 1):
-                    difference_init_end_action_joint_value = sim_scene.how_actionable_grasp(
-                        multi_thread=multi_thread,
-                        init_action_object_joint_values=torch_init_action_object_joint_values)
-        print("last i", i)
+            """"""
 
         return difference_init_end_action_joint_value
 
