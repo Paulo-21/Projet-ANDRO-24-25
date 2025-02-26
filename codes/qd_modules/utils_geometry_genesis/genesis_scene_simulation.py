@@ -437,7 +437,7 @@ class Genesis_scene_simulation():
                                                self.finger_items_number)
         elif multi_thread=="GPU_parallel" :
             torch_force_on_robot = torch.tile(torch.tensor(force_input, device=gs.device), (self.n_envs, 1))
-            self.robot.set_dofs_position(torch_force_on_robot, self.finger_items_number)
+            self.robot.control_dofs_force(torch_force_on_robot, self.finger_items_number)
         else:
             raise ValueError("PB GPU mode")
 

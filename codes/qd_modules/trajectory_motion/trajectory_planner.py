@@ -19,6 +19,31 @@ import math
 from ..trajectory_motion.colors_const import *
 
 
+def dot_torch_capsule(a, b):
+    batched_function = torch.vmap(torch_dot_multi_dim, in_dims=(0, 0))
+    result = batched_function(a, b)
+    to_mult = result.unsqueeze(1)
+    final = to_mult * b
+    return final
+def torch_dot_multi_dim(a,b):
+    return  torch.dot(a,b)
+
+def torch_quaternion_rotate_vector(quat,v_torch):
+    q_conj = quat * torch.tensor([1, -1, -1, -1], dtype=quat.dtype, device=quat.device) # Conjugué du quaternion
+    v_rotated_quat = torch_quaternion_multiply(torch_quaternion_multiply(quat, v_torch), q_conj)
+    return  v_rotated_quat[1:].clone().detach()
+
+
+def torch_quaternion_multiply(q1, q2):
+    w1, x1, y1, z1 = q1.unbind(-1)
+    w2, x2, y2, z2 = q2.unbind(-1)
+    stack_tensor = torch.stack([
+        w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
+        w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+        w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+        w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+    ])
+    return stack_tensor
 
 def rot_mtx_fct( quat_pyquat_simple_array):
     rotation_matrix = quat_pyquat_simple_array.rotation_matrix
@@ -29,7 +54,6 @@ def quaternion_product(child_link_quat_pyquat,parent_link_quat_pyquat, child_lin
         parent_link_quat_pyquat = Quaternion(parent_link_quat_pyquat)
         child_link_pose_wf = child_link_pose_wf
 
-
         quat_pyquat = child_link_quat_pyquat * parent_link_quat_pyquat
         rotation_matrix = quat_pyquat.rotation_matrix
 
@@ -38,11 +62,12 @@ def quaternion_product(child_link_quat_pyquat,parent_link_quat_pyquat, child_lin
         T = [tx, ty, tz]
         O_link_frame_wf = np.array(T)
         matrice_homogene = concat_rotation_t_matrix(rotation_matrix=rotation_matrix, T=T)
-        quat_pyquat_torch = torch.Tensor(quat_pyquat.q)
-        rotation_matrix_torch = torch.Tensor(rotation_matrix)
-        matrice_homogene_torch = torch.Tensor(matrice_homogene)
+        quat_pyquat_torch = torch.Tensor(quat_pyquat.q).to("cuda")
+        rotation_matrix_torch = torch.Tensor(rotation_matrix).to("cuda")
+        matrice_homogene_torch = torch.Tensor(matrice_homogene).to("cuda")
+        O_link_frame_wf_torch = torch.Tensor(O_link_frame_wf).to("cuda")
 
-        return quat_pyquat_torch,rotation_matrix_torch, matrice_homogene_torch, O_link_frame_wf
+        return quat_pyquat_torch,rotation_matrix_torch, matrice_homogene_torch, O_link_frame_wf_torch
 
 def concat_rotation_t_matrix(rotation_matrix, T):
     tx, ty, tz = T[0], T[1], T[2]
@@ -119,29 +144,32 @@ class Trajectory_planner():
             T = [tx, ty, tz]
             matrice_homogene = concat_rotation_t_matrix(rotation_matrix=rotation_matrix, T=T)
 
-        else:
+        if multi_thread == "GPU_parallel":
             parent_link_quat_pyquat_array = parent_link_quat_pyquat
             child_link_quat_pyquat_array = child_link_quat_pyquat
             child_link_pose_wf_array = child_link_pose_wf
-            quat_pyquat_torch_concat = torch.empty(0, 4)
-            rotation_matrix_torch_concat =  torch.empty(0, 3,3)
-            matrice_homogene_torch_concat = torch.empty(0, 4,4)
+            quat_pyquat_torch_concat = torch.empty(0, 4, device="cuda")
+            rotation_matrix_torch_concat =  torch.empty(0, 3,3, device="cuda")
+            matrice_homogene_torch_concat = torch.empty(0, 4,4, device="cuda")
+            O_link_frame_wf_concat =torch.empty(0, 3, device="cuda")
 
             for i in range(len(child_link_quat_pyquat)):
                 parent_link_quat_pyquat = parent_link_quat_pyquat_array[i].cpu().numpy()
                 child_link_quat_pyquat = child_link_quat_pyquat_array[i].cpu().numpy()
                 child_link_pose_wf = child_link_pose_wf_array[i].cpu().numpy()
 
-                quat_pyquat_torch, rotation_matrix_torch, matrice_homogene_torch, O_link_frame_wf = quaternion_product(
+                quat_pyquat_torch, rotation_matrix_torch, matrice_homogene_torch, O_link_frame_wf_torch = quaternion_product(
                     child_link_quat_pyquat=child_link_quat_pyquat,
                     parent_link_quat_pyquat=parent_link_quat_pyquat,
-                    child_link_pose_wf=child_link_pose_wf)#array
-                print("%%%%%%%%%%",i,"%%%%%%")
+                    child_link_pose_wf=child_link_pose_wf)
                 quat_pyquat_torch_concat =  torch.cat((quat_pyquat_torch_concat, quat_pyquat_torch.unsqueeze(0)), dim=0) #torch.stack((quat_pyquat_torch_concat, quat_pyquat_torch ),dim=0)
                 rotation_matrix_torch_concat = torch.cat((rotation_matrix_torch_concat, rotation_matrix_torch.unsqueeze(0)), dim=0)  # torch.stack((rotation_matrix_torch_concat, rotation_matrix_torch), dim=0)
                 matrice_homogene_torch_concat = torch.cat((matrice_homogene_torch_concat, matrice_homogene_torch.unsqueeze(0)), dim=0)  # torch.stack ((matrice_homogene_torch_concat, matrice_homogene_torch), dim=0)
+                O_link_frame_wf_concat = torch.cat((O_link_frame_wf_concat, O_link_frame_wf_torch.unsqueeze(0)), dim=0)
+
             matrice_homogene = matrice_homogene_torch_concat
             quat_pyquat = quat_pyquat_torch_concat
+            O_link_frame_wf = O_link_frame_wf_concat
         return matrice_homogene, quat_pyquat, O_link_frame_wf
 
 
@@ -172,15 +200,13 @@ class Trajectory_planner():
                 sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_left_arrow, radius=0.0006, color=vert)
                 sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_right_arrow, radius=0.0006, color=rouge)
             sim_scene.scene.step()
-            print("New debug step")
 
         print("End of applying small control force")
 
         child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf,dof_motion_angle_lf = sim_scene.get_parent_child_info(multi_thread,nbr_item_joint_studied)
         matrice_homogene, quat_pyquat,O_link_frame_wf = self.get_rotation_mtx( multi_thread, child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf)
 
-       # torch_matrice_homogene = torch.tile(torch.tensor([100], device=gs.device), (sim_scene.n_envs, 1))
-       # torch_object_remain_origin = torch.tile(torch.tensor([0, 0, 0, 0, 0, 0], device=gs.device),(sim_scene.n_envs, 1))
+
         """
         if geometric_debug:
          sim_scene.scene.draw_debug_frame(matrice_homogene[0], axis_length=2, origin_size=0.015, axis_radius=0.001)
@@ -217,42 +243,70 @@ class Trajectory_planner():
             raise Exception('erreur dans l affectation de l axe actif')
 
         if multi_thread=="GPU_simple":
-            """
+
             quat_array = np.array([quat_pyquat[0],quat_pyquat[1],quat_pyquat[2],quat_pyquat[3]])
-            ref_axis_orthogonal_to_active_direction_world_frame = quaternion_rotate_vector(
-                quat_array,
-                ref_axis_orthogonal_to_active_direction_local_frame)
-            ref_axis_orthogonal2_to_active_direction_world_frame = quaternion_rotate_vector(
-                quat_array,
-                ref_axis_orthogonal2_to_active_direction_local_frame)
-            ref_axis_active_direction_world_frame = quaternion_rotate_vector(
-                quat_array,
-                ref_axis_active_direction_local_frame)
-                """
-            ref_axis_orthogonal_to_active_direction_world_frame = quat_pyquat.rotate(
-                ref_axis_orthogonal_to_active_direction_local_frame)
-            ref_axis_orthogonal2_to_active_direction_world_frame = quat_pyquat.rotate(
-                ref_axis_orthogonal2_to_active_direction_local_frame)
+            ref_axis_orthogonal_to_active_direction_world_frame = quaternion_rotate_vector(quat_array,ref_axis_orthogonal_to_active_direction_local_frame)
+            ref_axis_orthogonal2_to_active_direction_world_frame= quaternion_rotate_vector(quat_array,ref_axis_orthogonal2_to_active_direction_local_frame)
+            ref_axis_active_direction_world_frame = quaternion_rotate_vector(quat_array,ref_axis_active_direction_local_frame)
 
-            ref_axis_active_direction_world_frame = quat_pyquat.rotate(ref_axis_active_direction_local_frame)
 
-            ref_X_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_x)
-            ref_Y_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_y)
-            ref_Z_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_z)
+            ref_X_LinkFrame_in_wf = quaternion_rotate_vector(quat_array,ref_axis_end_x)
+            ref_Y_LinkFrame_in_wf = quaternion_rotate_vector(quat_array,ref_axis_end_y)
+            ref_Z_LinkFrame_in_wf = quaternion_rotate_vector(quat_array,ref_axis_end_z)
+
             print("stop debug here")
-        else:
+            O_link_frame_wf_debug = O_link_frame_wf
+            ref_X_LinkFrame_in_wf_debug = ref_X_LinkFrame_in_wf
+            ref_Y_LinkFrame_in_wf_debug = ref_Y_LinkFrame_in_wf
+            ref_Z_LinkFrame_in_wf_debug = ref_Z_LinkFrame_in_wf
             pdb.set_trace()
+        else:
+            ref_axis_end_x_torch_v = np.concatenate(([0], ref_axis_end_x))
+            ref_axis_end_y_torch_v = np.concatenate(([0], ref_axis_end_y))
+            ref_axis_end_z_torch_v = np.concatenate(([0], ref_axis_end_z))
 
+            ref_axis_orthogonal_to_active_direction_local_frame_torch_v = np.concatenate(([0], ref_axis_orthogonal_to_active_direction_local_frame))
+            ref_axis_orthogonal2_to_active_direction_local_frame_torch_v = np.concatenate(([0], ref_axis_orthogonal2_to_active_direction_local_frame))
+            ref_axis_active_direction_world_frame_torch_v = np.concatenate(([0], ref_axis_active_direction_local_frame))
 
+            ref_axis_end_x_torch = torch.from_numpy(ref_axis_end_x_torch_v)
+            ref_axis_end_y_torch = torch.from_numpy(ref_axis_end_y_torch_v)
+            ref_axis_end_z_torch = torch.from_numpy(ref_axis_end_z_torch_v)
+
+            ref_axis_orthogonal_to_active_direction_local_frame_torch = torch.from_numpy(ref_axis_orthogonal_to_active_direction_local_frame_torch_v)
+            ref_axis_orthogonal2_to_active_direction_local_frame_torch = torch.from_numpy(ref_axis_orthogonal2_to_active_direction_local_frame_torch_v)
+            ref_axis_active_direction_world_frame_torch = torch.from_numpy(ref_axis_active_direction_world_frame_torch_v)
+
+            batched_function = torch.vmap(torch_quaternion_rotate_vector, in_dims=(0, None))
+            ref_X_LinkFrame_in_wf_torch = batched_function(quat_pyquat, ref_axis_end_x_torch)
+            ref_Y_LinkFrame_in_wf_torch = batched_function(quat_pyquat,ref_axis_end_y_torch)
+            ref_Z_LinkFrame_in_wf_torch = batched_function(quat_pyquat, ref_axis_end_z_torch)
+
+            ref_axis_orthogonal_to_active_direction_world_frame = batched_function(quat_pyquat, ref_axis_orthogonal_to_active_direction_local_frame_torch)
+            ref_axis_orthogonal2_to_active_direction_world_frame = batched_function(quat_pyquat, ref_axis_orthogonal2_to_active_direction_local_frame_torch)
+            ref_axis_active_direction_world_frame = batched_function(quat_pyquat, ref_axis_active_direction_world_frame_torch)
+            O_link_frame_wf_debug = O_link_frame_wf.cpu()[0]
+            ref_X_LinkFrame_in_wf_debug =ref_X_LinkFrame_in_wf_torch.cpu()[0]
+            ref_Y_LinkFrame_in_wf_debug = ref_Y_LinkFrame_in_wf_torch.cpu()[0]
+            ref_Z_LinkFrame_in_wf_debug = ref_Z_LinkFrame_in_wf_torch.cpu()[0]
         if geometric_debug:
-            sim_scene.scene.draw_debug_arrow(O_link_frame_wf, 0.3*ref_X_LinkFrame_in_wf, radius=0.01, color=(1, 0, 0, 0.5))
-            sim_scene.scene.draw_debug_arrow(O_link_frame_wf, 0.3*ref_Y_LinkFrame_in_wf, radius=0.01, color=(0, 1, 0, 0.5))
-            sim_scene.scene.draw_debug_arrow(O_link_frame_wf, 0.3*ref_Z_LinkFrame_in_wf, radius=0.01, color=(0, 0, 1.0, 0.5))
+            sim_scene.scene.draw_debug_arrow(O_link_frame_wf_debug, 0.3 * ref_X_LinkFrame_in_wf_debug, radius=0.01,
+                                             color=(1, 0, 0, 0.5))
+            sim_scene.scene.draw_debug_arrow(O_link_frame_wf_debug, 0.3 * ref_Y_LinkFrame_in_wf_debug, radius=0.01,
+                                             color=(0, 1, 0, 0.5))
+            sim_scene.scene.draw_debug_arrow(O_link_frame_wf_debug, 0.3 * ref_Z_LinkFrame_in_wf_debug, radius=0.01,
+                                             color=(0, 0, 1.0, 0.5))
+            sim_scene.scene.draw_debug_sphere(O_link_frame_wf_debug, radius=0.1, color=(1.0, 0.0, 0.0, 0.5))
+
 
         num_points = 100
-        sim_scene.scene.draw_debug_sphere(np.array(O_link_frame_wf), radius=0.1, color=(1.0, 0.0, 0.0, 0.5))
         O_point_wf = O_link_frame_wf
-        Mprime_point_wf = sim_scene.robot.get_pos().cpu().numpy()
+        if multi_thread=="GPU_simple":
+            Mprime_point_wf = sim_scene.robot.get_pos().cpu().numpy()
+        elif multi_thread=="GPU_parallel" :
+            Mprime_point_wf = sim_scene.robot.get_pos()
+        else :
+            pass
 
         R_point_wf = O_point_wf + ref_axis_orthogonal_to_active_direction_world_frame
         R2_point_wf = O_point_wf + ref_axis_orthogonal2_to_active_direction_world_frame
@@ -263,10 +317,24 @@ class Trajectory_planner():
         OR_vect_wf = R_point_wf - O_point_wf
         OR2_vect_wf = R2_point_wf - O_point_wf
         OMprime_vect = Mprime_point_wf - O_point_wf
+        if multi_thread=="GPU_simple":
+            O_point_wf_debug = O_point_wf
+            OMprime_vect_debug = OMprime_vect
+        elif multi_thread=="GPU_parallel":
+            O_point_wf_debug =O_point_wf.cpu()[0].numpy()
+            OMprime_vect_debug =  OMprime_vect.cpu()[0].numpy()
+        sim_scene.scene.draw_debug_arrow(O_point_wf_debug, OMprime_vect_debug, radius=0.006, color=jaune)
+        pdb.set_trace()
 
-        sim_scene.scene.draw_debug_arrow(O_point_wf, OMprime_vect, radius=0.006, color=jaune)
+        if multi_thread=="GPU_simple":
+            OMprime_on_OA_vect = np.dot(OMprime_vect, OA_vect) * OA_vect
+            pdb.set_trace()
+        if multi_thread=="GPU_parallel":
+            OMprime_on_OA_vect = dot_torch_capsule(a=OMprime_vect,b=OA_vect)
+            pdb.set_trace()
 
-        OMprime_on_OA_vect= np.dot(OMprime_vect,OA_vect)*OA_vect
+
+
         OMprime_on_R2_vect= np.dot(OMprime_vect,OR2_vect_wf)*OR2_vect_wf
         OMprime_on_R_vect = np.dot(OMprime_vect,OR_vect_wf)*OR_vect_wf
 
@@ -277,7 +345,6 @@ class Trajectory_planner():
         Mprime_on_OR_point = O_point_wf + OMprime_on_R_vect
 
         if display_debug_geometry :
-
             sim_scene.scene.draw_debug_sphere(Mprime_on_OA_point, radius=0.01, color=mauve)
             sim_scene.scene.draw_debug_sphere(Mprime_on_OR2_point, radius=0.01, color=mauve)
             sim_scene.scene.draw_debug_sphere(Mprime_on_OR_point, radius=0.01, color=mauve)
