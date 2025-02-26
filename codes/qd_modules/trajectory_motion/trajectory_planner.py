@@ -36,12 +36,13 @@ def quaternion_product(child_link_quat_pyquat,parent_link_quat_pyquat, child_lin
         tx, ty, tz = child_link_pose_wf[0].item(), child_link_pose_wf[1].item(), child_link_pose_wf[
             2].item()
         T = [tx, ty, tz]
+        O_link_frame_wf = np.array(T)
         matrice_homogene = concat_rotation_t_matrix(rotation_matrix=rotation_matrix, T=T)
         quat_pyquat_torch = torch.Tensor(quat_pyquat.q)
         rotation_matrix_torch = torch.Tensor(rotation_matrix)
         matrice_homogene_torch = torch.Tensor(matrice_homogene)
 
-        return quat_pyquat_torch,rotation_matrix_torch, matrice_homogene_torch
+        return quat_pyquat_torch,rotation_matrix_torch, matrice_homogene_torch, O_link_frame_wf
 
 def concat_rotation_t_matrix(rotation_matrix, T):
     tx, ty, tz = T[0], T[1], T[2]
@@ -131,7 +132,7 @@ class Trajectory_planner():
                 child_link_quat_pyquat = child_link_quat_pyquat_array[i].cpu().numpy()
                 child_link_pose_wf = child_link_pose_wf_array[i].cpu().numpy()
 
-                quat_pyquat_torch, rotation_matrix_torch, matrice_homogene_torch = quaternion_product(
+                quat_pyquat_torch, rotation_matrix_torch, matrice_homogene_torch, O_link_frame_wf = quaternion_product(
                     child_link_quat_pyquat=child_link_quat_pyquat,
                     parent_link_quat_pyquat=parent_link_quat_pyquat,
                     child_link_pose_wf=child_link_pose_wf)#array
@@ -154,7 +155,7 @@ class Trajectory_planner():
             nstep=10
         else:
             nstep=1000
-        small_force_appliend_on_fingers = -0.05
+        small_force_appliend_on_fingers = -0.02
         hard_force_appliend_on_fingers = -1.5#0-1.5
         sim_scene.command_open_fingers(multi_thread)
         for i in range(nstep):
@@ -171,15 +172,19 @@ class Trajectory_planner():
                 sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_left_arrow, radius=0.0006, color=vert)
                 sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_right_arrow, radius=0.0006, color=rouge)
             sim_scene.scene.step()
+            print("New debug step")
+
         print("End of applying small control force")
+
         child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf,dof_motion_angle_lf = sim_scene.get_parent_child_info(multi_thread,nbr_item_joint_studied)
         matrice_homogene, quat_pyquat,O_link_frame_wf = self.get_rotation_mtx( multi_thread, child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf)
-        pdb.set_trace()
+
        # torch_matrice_homogene = torch.tile(torch.tensor([100], device=gs.device), (sim_scene.n_envs, 1))
        # torch_object_remain_origin = torch.tile(torch.tensor([0, 0, 0, 0, 0, 0], device=gs.device),(sim_scene.n_envs, 1))
-
+        """
         if geometric_debug:
-         sim_scene.scene.draw_debug_frame(matrice_homogene, axis_length=2, origin_size=0.015, axis_radius=0.001)
+         sim_scene.scene.draw_debug_frame(matrice_homogene[0], axis_length=2, origin_size=0.015, axis_radius=0.001)
+         """
 
         B = np.absolute(dof_motion_angle_lf) #si valeur absolue est - ou plsu va changer
         value_active_axis_local_ref = np.argmax(B)
@@ -211,31 +216,33 @@ class Trajectory_planner():
         else:
             raise Exception('erreur dans l affectation de l axe actif')
 
+        if multi_thread=="GPU_simple":
+            """
+            quat_array = np.array([quat_pyquat[0],quat_pyquat[1],quat_pyquat[2],quat_pyquat[3]])
+            ref_axis_orthogonal_to_active_direction_world_frame = quaternion_rotate_vector(
+                quat_array,
+                ref_axis_orthogonal_to_active_direction_local_frame)
+            ref_axis_orthogonal2_to_active_direction_world_frame = quaternion_rotate_vector(
+                quat_array,
+                ref_axis_orthogonal2_to_active_direction_local_frame)
+            ref_axis_active_direction_world_frame = quaternion_rotate_vector(
+                quat_array,
+                ref_axis_active_direction_local_frame)
+                """
+            ref_axis_orthogonal_to_active_direction_world_frame = quat_pyquat.rotate(
+                ref_axis_orthogonal_to_active_direction_local_frame)
+            ref_axis_orthogonal2_to_active_direction_world_frame = quat_pyquat.rotate(
+                ref_axis_orthogonal2_to_active_direction_local_frame)
 
-        ref_axis_orthogonal_to_active_direction_world_frame = quat_pyquat.rotate(
-            ref_axis_orthogonal_to_active_direction_local_frame)
-        ref_axis_orthogonal2_to_active_direction_world_frame = quat_pyquat.rotate(
-            ref_axis_orthogonal2_to_active_direction_local_frame)
-        ref_axis_active_direction_world_frame = quat_pyquat.rotate(ref_axis_active_direction_local_frame)
+            ref_axis_active_direction_world_frame = quat_pyquat.rotate(ref_axis_active_direction_local_frame)
 
-        quat_array= np.array([quat_pyquat[0],quat_pyquat[1],quat_pyquat[2],quat_pyquat[3]])
-        ref_axis_orthogonal_to_active_direction_world_frame2 = quaternion_rotate_vector(
-            quat_array,
-            ref_axis_orthogonal_to_active_direction_local_frame)
-        ref_axis_orthogonal2_to_active_direction_world_frame2 = quaternion_rotate_vector(
-            quat_array,
-            ref_axis_orthogonal2_to_active_direction_local_frame)
-        ref_axis_active_direction_world_frame2 = quaternion_rotate_vector(
-            quat_array,
-            ref_axis_active_direction_local_frame)
+            ref_X_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_x)
+            ref_Y_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_y)
+            ref_Z_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_z)
+            print("stop debug here")
+        else:
+            pdb.set_trace()
 
-
-        pdb.set_trace()
-
-
-        ref_X_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_x)
-        ref_Y_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_y)
-        ref_Z_LinkFrame_in_wf = quat_pyquat.rotate(ref_axis_end_z)
 
         if geometric_debug:
             sim_scene.scene.draw_debug_arrow(O_link_frame_wf, 0.3*ref_X_LinkFrame_in_wf, radius=0.01, color=(1, 0, 0, 0.5))
@@ -345,10 +352,7 @@ class Trajectory_planner():
 
 
         if trajectory_geometric_debug:
-            if debug_opening:
-                num_points = 2
-            else:
-                pass
+
             for i in range(num_points):
                 x = x_list[i]
                 y = y_list[i]
