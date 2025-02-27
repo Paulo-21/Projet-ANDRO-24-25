@@ -17,19 +17,20 @@ from ..actions_achitecture_module.genesis_actions_architecture import *
 from pyquaternion import Quaternion
 import math
 from ..trajectory_motion.colors_const import *
-
+def matmul_torch(rotation_matrix_torch,ref_vect_for_arc):
+    return torch.matmul(rotation_matrix_torch, ref_vect_for_arc)
 
 def compute_tensor(theta, vectors):
-    x, y, z = vectors[:, 0], vectors[:, 1], vectors[:, 2]  # Décomposer les coordonnées
+    ux, uy, uz = vectors[:, 0], vectors[:, 1], vectors[:, 2]  # Décomposer les coordonnées
     theta_squeezed = theta.squeeze(-1)
     c = torch.cos(theta_squeezed)
     s = torch.sin(theta_squeezed)
 
     matrix = torch.stack(
-        [torch.stack([x ** 2 + (1 - x ** 2) * c, x * y * (1 - c) - z * s, x * z * (1 - c) + y * s], dim=-1),
-         torch.stack([x * y * (1 - c) + z * s, y ** 2 * (1 - y ** 2) * c, y * z * (1 - c) - x * s], dim=-1),
-         torch.stack([x * y * (1 - c) - y * s, y * z * (1 - c) + x * s, z ** 2 + (1 - z ** 2) * c], dim=-1)],
-        dim=1)
+        [torch.stack([ux ** 2 + (1 - ux ** 2) * c, ux * uy * (1 - c) - uz * s, ux * uz * (1 - c) + uy * s], dim=-1),
+         torch.stack([ux * uy * (1 - c) + uz * s, uy ** 2 + (1 - uy ** 2) * c, uy * uz * (1 - c) - ux * s], dim=-1),
+         torch.stack([ux * uz * (1 - c) - uy * s, uy * uz * (1 - c) + ux * s, uz ** 2 + (1 - uz ** 2) * c], dim=-1)],
+                     dim=1)
     return matrix
 
 def cross_torch(a,b):
@@ -136,8 +137,9 @@ class Trajectory_planner():
             z = []
             for angle_rad in angles_rad:
                 rotation_matrix = self.rotation_matrix_theta_around_axisU(u=u_vect, theta_rad=angle_rad)
-                pdb.set_trace()
                 start_vect = np.dot(rotation_matrix, ref_vect_for_arc)
+                pdb.set_trace()
+
                 trajectory_point_in_wrold_space = center_point + start_vect
                 [x_coordinate,y_coordinate,z_coordinate]=trajectory_point_in_wrold_space
                 x.append(x_coordinate)
@@ -146,20 +148,31 @@ class Trajectory_planner():
             x=np.array(x)
             y=np.array(y)
             z=np.array(z)
+
         elif multi_thread=="GPU_parallel" :
             increment_total_in_deg = 45
             increment_total_in_rad = increment_total_in_deg *np.pi/180
             deg_for_one_step = increment_total_in_rad / num_points
             start_angle_rad = torch.deg2rad(start_angle)
+            x = torch.empty(0,  len(start_angle), device="cuda")
+            y = torch.empty(0,  len(start_angle), device="cuda")
+            z = torch.empty(0,  len(start_angle), device="cuda")
+
             for theta_column_item in range(num_points):
                 theta_column = start_angle_rad + theta_column_item*deg_for_one_step
                 rotation_matrix_torch = compute_tensor(theta_column, u_vect)
-                pdb.set_trace()
+                batched_function = torch.vmap(matmul_torch, in_dims=(0, 0))
+                start_vect_torch = batched_function(rotation_matrix_torch,ref_vect_for_arc)
+                trajectory_point_in_wrold_space = center_point + start_vect_torch
+                x_one = trajectory_point_in_wrold_space[:,0]
+                y_one = trajectory_point_in_wrold_space[:,1]
+                z_one = trajectory_point_in_wrold_space[:,2]
+                x = torch.cat((x, x_one.unsqueeze(0)), dim=0)
+                y = torch.cat((y, y_one.unsqueeze(0)), dim=0)
+                z = torch.cat((z, z_one.unsqueeze(0)), dim=0)
+
         else:
             raise ValueError('there is a pb in multithread name')
-
-
-            pdb.set_trace()
 
         return x, y, z
 
@@ -535,6 +548,7 @@ class Trajectory_planner():
                                               center_point=H_point,
                                                    multi_thread=multi_thread,
                                                    delta_deg_angle=delta_deg_angle)
+        pdb.set_trace()
         if trajectory_geometric_debug:
 
             for i in range(num_points):
