@@ -122,7 +122,7 @@ class Genesis_scene_simulation():
 
     def command_pos_of_robot(self,x_list, y_list, z_list, n_waypoint, multi_thread) :
         if multi_thread=="GPU_simple":
-            self.robot.set_pos([x_list[:,n_waypoint], y_list[n_waypoint], z_list[n_waypoint]])
+            self.robot.control_dofs_position([x_list[n_waypoint], y_list[n_waypoint], z_list[n_waypoint]], [0, 1, 2])
         elif multi_thread=="GPU_parallel" :
             x_list_parallel_env =  x_list[n_waypoint, :]
             y_list_parallel_env = y_list[n_waypoint, :]
@@ -297,11 +297,13 @@ class Genesis_scene_simulation():
             return tensor_rigth_finger_is_touching_left_finger_is_touching
 
     def how_actionable_grasp(self,init_action_object_joint_values, multi_thread):
-        '''init '''
-
-        end_action_object_joint_values = self.object.get_qpos()
-        diffence_init_end_action_joint_value = init_action_object_joint_values - end_action_object_joint_values
-        test_debug = [self.robot.joints.__getitem__(i).name for i in range(len(self.robot.joints))]
+        if multi_thread=="GPU_simple":
+            end_action_object_joint_values = self.object.get_qpos()
+            diffence_init_end_action_joint_value = init_action_object_joint_values - end_action_object_joint_values
+            test_debug = [self.robot.joints.__getitem__(i).name for i in range(len(self.robot.joints))]
+        else:
+            #TODO coder la difference des articulations
+            pdb.set_trace()
         return diffence_init_end_action_joint_value #revoie tenseur ou liste selon le cas
 
     def push_action(self,action, multi_thread):

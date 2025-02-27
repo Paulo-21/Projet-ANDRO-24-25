@@ -128,7 +128,7 @@ class Trajectory_planner():
     def __init__(self):
         self.test=None
 
-    def generate_arc(self,sim_scene,ref_vect_for_arc, u_vect, stop_angle=30, start_angle=0, num_points=100, center_point=0,multi_thread=None, delta_deg_angle=2
+    def generate_arc(self,ref_vect_for_arc, u_vect, stop_angle=30, start_angle=0, num_points=100, center_point=0,multi_thread=None, increment_total_in_deg=2
             ):
         if multi_thread=="GPU_simple":
             angles_rad = np.linspace(np.radians(start_angle), np.radians(stop_angle), num_points)
@@ -138,7 +138,6 @@ class Trajectory_planner():
             for angle_rad in angles_rad:
                 rotation_matrix = self.rotation_matrix_theta_around_axisU(u=u_vect, theta_rad=angle_rad)
                 start_vect = np.dot(rotation_matrix, ref_vect_for_arc)
-                pdb.set_trace()
 
                 trajectory_point_in_wrold_space = center_point + start_vect
                 [x_coordinate,y_coordinate,z_coordinate]=trajectory_point_in_wrold_space
@@ -150,7 +149,7 @@ class Trajectory_planner():
             z=np.array(z)
 
         elif multi_thread=="GPU_parallel" :
-            increment_total_in_deg = 45
+
             increment_total_in_rad = increment_total_in_deg *np.pi/180
             deg_for_one_step = increment_total_in_rad / num_points
             start_angle_rad = torch.deg2rad(start_angle)
@@ -329,7 +328,6 @@ class Trajectory_planner():
             ref_X_LinkFrame_in_wf_debug = ref_X_LinkFrame_in_wf
             ref_Y_LinkFrame_in_wf_debug = ref_Y_LinkFrame_in_wf
             ref_Z_LinkFrame_in_wf_debug = ref_Z_LinkFrame_in_wf
-            pdb.set_trace()
         else:
             ref_axis_end_x_torch_v = np.concatenate(([0], ref_axis_end_x))
             ref_axis_end_y_torch_v = np.concatenate(([0], ref_axis_end_y))
@@ -505,7 +503,8 @@ class Trajectory_planner():
 
 
         start_angle_deg = theta_rad * 180 / np.pi
-        delta_deg_angle = 45
+        delta_deg_angle = 10
+        increment_total_in_deg = delta_deg_angle
 
         if direction=="positive":
             stop_angle_deg = start_angle_deg + delta_deg_angle
@@ -536,10 +535,8 @@ class Trajectory_planner():
             sim_scene.scene.draw_debug_arrow(O_point_wf_debug, start_vect_debug, radius=0.006, color=vert_canard)
             sim_scene.scene.draw_debug_arrow(O_point_wf_debug, stop_vect_debug, radius=0.006, color=vert_canard)
 
-        radius = nom_radius_around_axis
-        center_point = H_point
 
-        x_list, y_list, z_list = self.generate_arc(sim_scene=sim_scene,
+        x_list, y_list, z_list = self.generate_arc(
                                               ref_vect_for_arc=vect_reference_radius_theta_zero,
                                               u_vect=OA_vect,
                                               stop_angle=stop_angle_deg,
@@ -547,10 +544,15 @@ class Trajectory_planner():
                                               num_points=100,
                                               center_point=H_point,
                                                    multi_thread=multi_thread,
-                                                   delta_deg_angle=delta_deg_angle)
-        x_list_debug = x_list[:,0].cpu().numpy()
-        y_list_debug = y_list[:,0].cpu().numpy()
-        z_list_debug = z_list[:,0].cpu().numpy()
+                                                   increment_total_in_deg=increment_total_in_deg)
+        if multi_thread=="GPU_simple":
+            x_list_debug = x_list
+            y_list_debug = y_list
+            z_list_debug = z_list
+        else :
+            x_list_debug = x_list[:,0].cpu().numpy()
+            y_list_debug = y_list[:,0].cpu().numpy()
+            z_list_debug = z_list[:,0].cpu().numpy()
         if trajectory_geometric_debug:
             for i in range(num_points):
                 x = x_list_debug[i]
@@ -563,10 +565,10 @@ class Trajectory_planner():
                 else:
                     sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.01, color=jaune)
         n_waypoint = 0
-        sim_scene.set_pos_of_robot(x_list, y_list, z_list, n_waypoint, multi_thread)
 
         n_step = num_points
         init_action_object_joint_values = sim_scene.object.get_qpos()
+        """
         if multi_thread != "GPU_parallel":
             for i in range(n_step):
                 pos_robot_in_trajectory = [x_list[n_waypoint], y_list[n_waypoint], z_list[n_waypoint]]
@@ -582,15 +584,19 @@ class Trajectory_planner():
                     init_action_object_joint_values=init_action_object_joint_values)
                 #sim_scene.scene.clear_debug_objects()
         else :
-            sim_scene.set_kp_parameters(multi_thread)
-            for i in range(n_step):
-                sim_scene.command_pos_of_robot(x_list, y_list, z_list, n_waypoint, multi_thread)
-                for _ in range(100):
-                    sim_scene.command_pos_of_object_static(multi_thread)
-                    sim_scene.apply_force_on_robot(hard_force_appliend_on_fingers, multi_thread)
-                    sim_scene.scene.step()
-
-                n_waypoint += 1
+        """
+        sim_scene.set_kp_parameters(multi_thread)
+        for i in range(n_step):
+            sim_scene.command_pos_of_robot(x_list, y_list, z_list, n_waypoint, multi_thread)
+            for _ in range(100):
+                sim_scene.command_pos_of_object_static(multi_thread)
+                sim_scene.apply_force_on_robot(hard_force_appliend_on_fingers, multi_thread)
+                sim_scene.scene.step()
+            n_waypoint += 1
+        difference_init_end_action_joint_value = sim_scene.how_actionable_grasp(
+            multi_thread=multi_thread,
+            init_action_object_joint_values=init_action_object_joint_values)
+        # sim_scene.scene.clear_debug_objects()
         pdb.set_trace()
 
         return difference_init_end_action_joint_value
