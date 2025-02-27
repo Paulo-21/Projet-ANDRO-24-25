@@ -67,7 +67,7 @@ def main():
     my_QD_algo = QD_algorithm(Name="Fist_name",
             biased_selection = True,
             nb_generations=3000,
-            pop_size=3,
+            pop_size=4,
             coefxyz_mutation=0.1,
             dynamic_application= action,
             bootstrap=True,

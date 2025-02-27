@@ -28,6 +28,7 @@ def dot_torch(a,b):
     result = batched_function(a, b)
     return result
 
+
 def dot_torch_capsule(a, b):
     result = dot_torch(a, b)
     to_mult = result.unsqueeze(1)
@@ -112,23 +113,32 @@ class Trajectory_planner():
     def __init__(self):
         self.test=None
 
-    def generate_arc(self,sim_scene,ref_vect_for_arc, u, stop_angle=30, start_angle=0, num_points=100, center_point=0,
+    def generate_arc(self,sim_scene,ref_vect_for_arc, u_vect, stop_angle=30, start_angle=0, num_points=100, center_point=0,multi_thread=None
             ):
-        angles_rad = np.linspace(np.radians(start_angle), np.radians(stop_angle), num_points)
-        x = []
-        y = []
-        z = []
-        for angle_rad in angles_rad:
-            rotation_matrix = self.rotation_matrix_theta_around_axisU(u=u, theta_rad=angle_rad)
-            start_vect = np.dot(rotation_matrix, ref_vect_for_arc)
-            trajectory_point_in_wrold_space = center_point + start_vect
-            [x_coordinate,y_coordinate,z_coordinate]=trajectory_point_in_wrold_space
-            x.append(x_coordinate)
-            y.append(y_coordinate)
-            z.append(z_coordinate)
-        x=np.array(x)
-        y=np.array(y)
-        z=np.array(z)
+       #
+
+        if multi_thread=="GPU_simple":
+            angles_rad = np.linspace(np.radians(start_angle), np.radians(stop_angle), num_points)
+            x = []
+            y = []
+            z = []
+            for angle_rad in angles_rad:
+                rotation_matrix = self.rotation_matrix_theta_around_axisU(u=u_vect, theta_rad=angle_rad)
+                start_vect = np.dot(rotation_matrix, ref_vect_for_arc)
+                trajectory_point_in_wrold_space = center_point + start_vect
+                [x_coordinate,y_coordinate,z_coordinate]=trajectory_point_in_wrold_space
+                x.append(x_coordinate)
+                y.append(y_coordinate)
+                z.append(z_coordinate)
+            x=np.array(x)
+            y=np.array(y)
+            z=np.array(z)
+        else :
+
+
+
+            pdb.set_trace()
+
         return x, y, z
 
     def rotation_matrix_theta_around_axisU(self,u,theta_rad):
@@ -143,6 +153,27 @@ class Trajectory_planner():
             [ux*uz*(1-c)-uy*s, uy*uz*(1-c)+ux*s, uz**2+(1-uz**2)*c],
         ])
         return rotation_matrix
+
+    def affect_xux_uy_uz(self,tensor_one_dim):
+        ux = tensor_one_dim[0]
+        uy = tensor_one_dim[1]
+        uz = tensor_one_dim[2]
+        pdb.set_trace()
+        return ux,uy,uz
+
+    def rotation_matrix_theta_around_axisU_torch(self, u_vect, theta_rad):
+        ux = u_vect[0]
+        uy = u_vect[1]
+        uz = u_vect[2]
+        c = np.cos(theta_rad)
+        s = np.sin(theta_rad)
+        rotation_matrix = np.array([
+            [ux ** 2 + (1 - ux ** 2) * c, ux * uy * (1 - c) - uz * s, ux * uz * (1 - c) + uy * s],
+            [ux * uy * (1 - c) + uz * s, uy ** 2 + (1 - uy ** 2) * c, uy * uz * (1 - c) - ux * s],
+            [ux * uz * (1 - c) - uy * s, uy * uz * (1 - c) + ux * s, uz ** 2 + (1 - uz ** 2) * c],
+        ])
+        return rotation_matrix
+
 
 
     def get_rotation_mtx(self, multi_thread, child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf):
@@ -455,23 +486,31 @@ class Trajectory_planner():
             stop_angle_rad_debug=stop_angle_rad
             vect_reference_radius_theta_zero_debug=vect_reference_radius_theta_zero
         else:
-            theta_rad_debug=theta_rad[0]
-            OA_vect_debug=OA_vect[0]
-            stop_angle_rad_debug=stop_angle_rad[0]
-            vect_reference_radius_theta_zero_debug=vect_reference_radius_theta_zero[0]
+            theta_rad_debug=theta_rad[0].cpu().numpy()[0]
+            OA_vect_debug=OA_vect[0].cpu().numpy()
+            stop_angle_rad_debug=stop_angle_rad[0].cpu().numpy()[0]
+            vect_reference_radius_theta_zero_debug=vect_reference_radius_theta_zero[0].cpu().numpy()
 
         test_lispace_debug = np.linspace(0,theta_rad_debug,20)
         for theta_rad_debug in test_lispace_debug:
             rotation_matrix_start_debug = self.rotation_matrix_theta_around_axisU(u=OA_vect_debug, theta_rad=theta_rad_debug)
             rotation_matrix_stop_debug = self.rotation_matrix_theta_around_axisU(u=OA_vect_debug, theta_rad=stop_angle_rad_debug)
-            start_vect  = np.dot(rotation_matrix_start_debug, vect_reference_radius_theta_zero)
-            stop_vect = np.dot(rotation_matrix_stop_debug, vect_reference_radius_theta_zero)
+            start_vect_debug  = np.dot(rotation_matrix_start_debug, vect_reference_radius_theta_zero_debug)
+            stop_vect_debug = np.dot(rotation_matrix_stop_debug, vect_reference_radius_theta_zero_debug)
 
-            sim_scene.scene.draw_debug_arrow(O_point_wf, start_vect, radius=0.006, color=vert_canard)
-            sim_scene.scene.draw_debug_arrow(O_point_wf, stop_vect, radius=0.006, color=vert_canard)
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, start_vect_debug, radius=0.006, color=vert_canard)
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, stop_vect_debug, radius=0.006, color=vert_canard)
 
         radius = nom_radius_around_axis
         center_point = H_point
+
+        x_list, y_list, z_list = self.generate_arc(sim_scene=sim_scene,
+                                              ref_vect_for_arc=vect_reference_radius_theta_zero,
+                                              u_vect=OA_vect,
+                                              stop_angle=stop_angle_deg,
+                                              start_angle=start_angle_deg,
+                                              num_points=100,
+                                              center_point=H_point)
         if trajectory_geometric_debug:
 
             for i in range(num_points):
