@@ -439,12 +439,7 @@ class Trajectory_planner():
 
 
         start_angle_deg = theta_rad * 180 / np.pi
-        if multi_thread=="GPU_simple":
-            delta_deg_angle = 45
-        else :
-
-        pdb.set_trace()
-        #TODO : Ajouter +45 a chacund es element test =torch.tensor([45,45,45], device="cuda")
+        delta_deg_angle = 45
 
         if direction=="positive":
             stop_angle_deg = start_angle_deg + delta_deg_angle
@@ -454,13 +449,23 @@ class Trajectory_planner():
             raise TypeError('No good direction given')
 
         stop_angle_rad = stop_angle_deg*np.pi/180
+        if multi_thread=="GPU_simple":
+            theta_rad_debug=theta_rad
+            OA_vect_debug=OA_vect
+            stop_angle_rad_debug=stop_angle_rad
+            vect_reference_radius_theta_zero_debug=vect_reference_radius_theta_zero
+        else:
+            theta_rad_debug=theta_rad[0]
+            OA_vect_debug=OA_vect[0]
+            stop_angle_rad_debug=stop_angle_rad[0]
+            vect_reference_radius_theta_zero_debug=vect_reference_radius_theta_zero[0]
 
-        test_lispace = np.linspace(0,theta_rad,20)
-        for theta_rad in test_lispace:
-            rotation_matrix_start = self.rotation_matrix_theta_around_axisU(u=OA_vect, theta_rad=theta_rad)
-            rotation_matrix_stop = self.rotation_matrix_theta_around_axisU(u=OA_vect, theta_rad=stop_angle_rad)
-            start_vect  = np.dot(rotation_matrix_start, vect_reference_radius_theta_zero)
-            stop_vect = np.dot(rotation_matrix_stop, vect_reference_radius_theta_zero)
+        test_lispace_debug = np.linspace(0,theta_rad_debug,20)
+        for theta_rad_debug in test_lispace_debug:
+            rotation_matrix_start_debug = self.rotation_matrix_theta_around_axisU(u=OA_vect_debug, theta_rad=theta_rad_debug)
+            rotation_matrix_stop_debug = self.rotation_matrix_theta_around_axisU(u=OA_vect_debug, theta_rad=stop_angle_rad_debug)
+            start_vect  = np.dot(rotation_matrix_start_debug, vect_reference_radius_theta_zero)
+            stop_vect = np.dot(rotation_matrix_stop_debug, vect_reference_radius_theta_zero)
 
             sim_scene.scene.draw_debug_arrow(O_point_wf, start_vect, radius=0.006, color=vert_canard)
             sim_scene.scene.draw_debug_arrow(O_point_wf, stop_vect, radius=0.006, color=vert_canard)
