@@ -109,6 +109,37 @@ class Genesis_scene_simulation():
         else:
             self.robot.set_pos(pos)
             self.robot.set_quat(quat)
+    def set_pos_of_robot(self,x_list, y_list, z_list, n_waypoint, multi_thread) :
+        if multi_thread=="GPU_simple":
+            self.robot.set_pos([x_list[:,n_waypoint], y_list[n_waypoint], z_list[n_waypoint]])
+        elif multi_thread=="GPU_parallel" :
+            x_list_parallel_env =  x_list[n_waypoint, :]
+            y_list_parallel_env = y_list[n_waypoint, :]
+            z_list_parallel_env = z_list[n_waypoint, :]
+            torch_pos = torch.stack([x_list_parallel_env,y_list_parallel_env,z_list_parallel_env],dim=-1)
+            self.robot.set_pos(torch_pos)
+        self.scene.step()
+
+    def command_pos_of_robot(self,x_list, y_list, z_list, n_waypoint, multi_thread) :
+        if multi_thread=="GPU_simple":
+            self.robot.set_pos([x_list[:,n_waypoint], y_list[n_waypoint], z_list[n_waypoint]])
+        elif multi_thread=="GPU_parallel" :
+            x_list_parallel_env =  x_list[n_waypoint, :]
+            y_list_parallel_env = y_list[n_waypoint, :]
+            z_list_parallel_env = z_list[n_waypoint, :]
+            torch_pos = torch.stack([x_list_parallel_env,y_list_parallel_env,z_list_parallel_env],dim=-1)
+            self.robot.control_dofs_position(torch_pos,[0, 1, 2])
+        self.scene.step()
+
+    def set_kp_parameters(self, multi_thread):
+        if multi_thread=="GPU_simple":
+            self.robot.set_dofs_kp(kp=np.array([100, 100, 100]), dofs_idx_local=[0, 1, 2])
+        else :
+            #torch_pos_static_obj = torch.tile(torch.tensor([100,100,100], device=gs.device), (self.n_envs, 1))
+            #pdb.set_trace()
+            #TODO voir comment paralleliser par environement, voir quelles fonctions sont parallelisables
+            self.robot.set_dofs_kp(kp=np.array([100, 100, 100]), dofs_idx_local=[0, 1, 2])
+
 
 
     def load_robot_parallel(self,pop_size):
@@ -440,6 +471,15 @@ class Genesis_scene_simulation():
             self.robot.control_dofs_force(torch_force_on_robot, self.finger_items_number)
         else:
             raise ValueError("PB GPU mode")
+
+    def command_pos_of_object_static(self,multi_thread):
+        if multi_thread=="GPU_parallel":
+            torch_pos_static_obj = torch.tile(torch.tensor([0, 0, 0, 0, 0, 0], device=gs.device), (self.n_envs, 1))
+            self.object.set_dofs_position(torch_pos_static_obj, [0, 1, 2, 3, 4, 5])
+        else :
+            self.object.set_dofs_position([0, 0, 0, 0, 0, 0], [0, 1, 2, 3, 4, 5])
+
+
 
 
 

@@ -548,25 +548,22 @@ class Trajectory_planner():
                                               center_point=H_point,
                                                    multi_thread=multi_thread,
                                                    delta_deg_angle=delta_deg_angle)
-        pdb.set_trace()
+        x_list_debug = x_list[:,0].cpu().numpy()
+        y_list_debug = y_list[:,0].cpu().numpy()
+        z_list_debug = z_list[:,0].cpu().numpy()
         if trajectory_geometric_debug:
-
             for i in range(num_points):
-                x = x_list[i]
-                y = y_list[i]
-                z = z_list[i]
+                x = x_list_debug[i]
+                y = y_list_debug[i]
+                z = z_list_debug[i]
                 if i==0:
                     sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.03, color=[0,1,0,1])
                 elif i==(num_points-1):
                     sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.03, color=[1, 0, 0, 1])
                 else:
                     sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.01, color=jaune)
-
-
         n_waypoint = 0
-
-        sim_scene.robot.set_pos([x_list[n_waypoint], y_list[n_waypoint], z_list[n_waypoint]])
-        print("stop debugging, hard force application will start")
+        sim_scene.set_pos_of_robot(x_list, y_list, z_list, n_waypoint, multi_thread)
 
         n_step = num_points
         init_action_object_joint_values = sim_scene.object.get_qpos()
@@ -579,13 +576,22 @@ class Trajectory_planner():
                     sim_scene.robot.control_dofs_force(np.array([hard_force_appliend_on_fingers, hard_force_appliend_on_fingers]), sim_scene.finger_items_number)
                     sim_scene.object.set_dofs_position([0, 0, 0, 0, 0, 0], [0, 1, 2, 3, 4, 5])
                     sim_scene.scene.step()
-
                 n_waypoint += 1
             difference_init_end_action_joint_value = sim_scene.how_actionable_grasp(
                     multi_thread=multi_thread,
                     init_action_object_joint_values=init_action_object_joint_values)
                 #sim_scene.scene.clear_debug_objects()
-            """"""
+        else :
+            sim_scene.set_kp_parameters(multi_thread)
+            for i in range(n_step):
+                sim_scene.command_pos_of_robot(x_list, y_list, z_list, n_waypoint, multi_thread)
+                for _ in range(100):
+                    sim_scene.command_pos_of_object_static(multi_thread)
+                    sim_scene.apply_force_on_robot(hard_force_appliend_on_fingers, multi_thread)
+                    sim_scene.scene.step()
+
+                n_waypoint += 1
+        pdb.set_trace()
 
         return difference_init_end_action_joint_value
 
