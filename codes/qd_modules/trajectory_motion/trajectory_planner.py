@@ -250,17 +250,18 @@ class Trajectory_planner():
 
 
     def apply_rotation_arround_articulation(self,sim_scene, nbr_item_joint_studied=3, multi_thread=None,  geometric_debug=True,direction="positive"):
+
         display_debug_geometry = True
         display_force_array = False
         trajectory_geometric_debug = True #display trajectroy motion
-        nbr_step_for_one_command = 10 # sans debug100
-        nbr_step_for_complient_control = 10 #1000 sans debug
-        num_points = 10 #10 for debug but 100 for normal
-        delta_deg_angle = 45
+        nbr_step_for_one_command = 100 # sans debug100
+        nbr_step_for_complient_control = 1000 #1000 sans debug
+        num_points = 300 #10 for debug but 100 for normal
+        delta_deg_angle = 50
 
 
         small_force_appliend_on_fingers = -0.02
-        hard_force_appliend_on_fingers = -1.5#0-1.5
+        hard_force_appliend_on_fingers = -1.5 #-1.5#0-1.5 pour le frigot
         sim_scene.command_open_fingers(multi_thread)
 
         for i in range(nbr_step_for_complient_control):
@@ -279,6 +280,7 @@ class Trajectory_planner():
             sim_scene.scene.step()
 
         print("End of applying small control force")
+        init_action_object_joint_values = sim_scene.get_list_of_object_joint_values(multi_thread)
 
         child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf,dof_motion_angle_lf = sim_scene.get_parent_child_info(multi_thread,nbr_item_joint_studied)
         matrice_homogene, quat_pyquat,O_link_frame_wf = self.get_rotation_mtx( multi_thread, child_link_quat_pyquat, parent_link_quat_pyquat, child_link_pose_wf)
@@ -364,7 +366,7 @@ class Trajectory_planner():
                                              color=(0, 1, 0, 0.5))
             sim_scene.scene.draw_debug_arrow(O_link_frame_wf_debug, 0.3 * ref_Z_LinkFrame_in_wf_debug, radius=0.01,
                                              color=(0, 0, 1.0, 0.5))
-            sim_scene.scene.draw_debug_sphere(O_link_frame_wf_debug, radius=0.1, color=(1.0, 0.0, 0.0, 0.5))
+            sim_scene.scene.draw_debug_sphere(O_link_frame_wf_debug, radius=0.01, color=(1.0, 0.0, 0.0, 0.5))
 
         O_point_wf = O_link_frame_wf
         if multi_thread=="GPU_simple":
@@ -496,8 +498,8 @@ class Trajectory_planner():
 
         sim_scene.scene.draw_debug_arrow(H_point_debug, 3*HMprime_vect_debug, radius=0.0006, color=bordeaux)
         sim_scene.scene.draw_debug_arrow(O_point_wf_debug, 3*OMprime_on_R2_vect_debug, radius=0.0006, color=bordeaux)
-        sim_scene.scene.draw_debug_arrow(H_point_debug, 3 * HMprime_vect_debug, radius=0.03, color=bordeaux)
-        sim_scene.scene.draw_debug_arrow(O_point_wf_debug, 3 * OR2_vect_wf_debug, radius=0.03, color=bordeaux)
+        sim_scene.scene.draw_debug_arrow(H_point_debug,  HMprime_vect_debug, radius=0.003, color=bordeaux)
+        sim_scene.scene.draw_debug_arrow(O_point_wf_debug,  OR2_vect_wf_debug, radius=0.003, color=bordeaux)
         #sim_scene.scene.draw_debug_arrow(O_point_wf, 3 * OMprime_on_R2_vect, radius=0.006, color=bordeaux)
 
 
@@ -531,8 +533,8 @@ class Trajectory_planner():
             start_vect_debug  = np.dot(rotation_matrix_start_debug, vect_reference_radius_theta_zero_debug)
             stop_vect_debug = np.dot(rotation_matrix_stop_debug, vect_reference_radius_theta_zero_debug)
 
-            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, start_vect_debug, radius=0.006, color=vert_canard)
-            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, stop_vect_debug, radius=0.006, color=vert_canard)
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, start_vect_debug, radius=0.001, color=vert_canard)
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, stop_vect_debug, radius=0.001, color=vert_canard)
 
 
         x_list, y_list, z_list = self.generate_arc(
@@ -558,15 +560,15 @@ class Trajectory_planner():
                 y = y_list_debug[i]
                 z = z_list_debug[i]
                 if i==0:
-                    sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.03, color=[0,1,0,1])
+                    sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.02, color=[0,1,0,1])
                 elif i==(num_points-1):
-                    sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.03, color=[1, 0, 0, 1])
+                    sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.02, color=[1, 0, 0, 1])
                 else:
                     sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.01, color=jaune)
         n_waypoint = 0
 
         n_step = num_points
-        init_action_object_joint_values = sim_scene.object.get_qpos()
+
 
         sim_scene.set_kp_parameters(multi_thread)
         for i in range(n_step):

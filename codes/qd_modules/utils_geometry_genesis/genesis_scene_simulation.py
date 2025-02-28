@@ -194,6 +194,7 @@ class Genesis_scene_simulation():
                 plane_reflection=True,  # turn on plane reflection
                 ambient_light=(0.1, 0.1, 0.1),  # ambient light setting
                 n_rendered_envs=1,
+
             ),
 
         )
@@ -295,13 +296,38 @@ class Genesis_scene_simulation():
                     tensor_rigth_finger_is_touching_left_finger_is_touching = self.find_fingers_contact(multi_thread=multi_thread)
 
             return tensor_rigth_finger_is_touching_left_finger_is_touching
+    def get_list_of_object_joint_values(self, multi_thread):
+        tensor_link_quat_list = self.object.get_links_quat()
+        return tensor_link_quat_list
+    def conjugate(self,quat):
+        return np.array([quat[0],-quat[1],-quat[2],-quat[3]])
+
+    def quaternion_product(self,q1,q2):
+        w1, x1, y1, z1 = q1
+        w2, x2, y2, z2 = q2
+
+        w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
+        x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
+        y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
+        z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+
+        return np.array([w, x, y, z])
 
     def how_actionable_grasp(self,init_action_object_joint_values, multi_thread):
-        pdb.set_trace()
+        end_action_object_joint_values = self.object.get_links_quat()
         if multi_thread=="GPU_simple":
-            end_action_object_joint_values = self.object.get_qpos()
-            diffence_init_end_action_joint_value = init_action_object_joint_values - end_action_object_joint_values
-            test_debug = [self.robot.joints.__getitem__(i).name for i in range(len(self.robot.joints))]
+            ind_studied =1
+            lower = init_action_object_joint_values[ind_studied].cpu().numpy()
+            upper = end_action_object_joint_values[ind_studied].cpu().numpy()
+            upper_conjugate = self.conjugate(upper)
+            qd_array =self.quaternion_product(upper_conjugate,lower)
+            qd = qd_array
+            phi = math.atan2(2 * (qd[0] * qd[1] + qd[2] * qd[3]), 1 - 2 * (qd[1] ** 2 + qd[2] ** 2))
+            theta = math.asin(2 * (qd[0] * qd[2] - qd[3] * qd[1]))
+            psi = math.atan2(2 * (qd[0] * qd[3] + qd[1] * qd[2]), 1 - 2 * (qd[2] ** 2 + qd[3] ** 2))
+            euleur_transform_between_begin_end=np.array([phi, theta, psi])
+            diffence_init_end_action_joint_value =  np.max(euleur_transform_between_begin_end)
+            pdb.set_trace()
         else:
             #TODO coder la difference des articulations
             pdb.set_trace()
