@@ -297,6 +297,7 @@ class Genesis_scene_simulation():
             return tensor_rigth_finger_is_touching_left_finger_is_touching
 
     def how_actionable_grasp(self,init_action_object_joint_values, multi_thread):
+        pdb.set_trace()
         if multi_thread=="GPU_simple":
             end_action_object_joint_values = self.object.get_qpos()
             diffence_init_end_action_joint_value = init_action_object_joint_values - end_action_object_joint_values

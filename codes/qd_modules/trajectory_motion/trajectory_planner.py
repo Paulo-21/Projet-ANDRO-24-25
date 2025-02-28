@@ -253,15 +253,17 @@ class Trajectory_planner():
         display_debug_geometry = True
         display_force_array = False
         trajectory_geometric_debug = True #display trajectroy motion
-        debug_opening = True
-        if display_debug_geometry:
-            nstep=10
-        else:
-            nstep=1000
+        nbr_step_for_one_command = 10 # sans debug100
+        nbr_step_for_complient_control = 10 #1000 sans debug
+        num_points = 10 #10 for debug but 100 for normal
+        delta_deg_angle = 45
+
+
         small_force_appliend_on_fingers = -0.02
         hard_force_appliend_on_fingers = -1.5#0-1.5
         sim_scene.command_open_fingers(multi_thread)
-        for i in range(nstep):
+
+        for i in range(nbr_step_for_complient_control):
             print("i = ", i)
             sim_scene.apply_force_on_robot(small_force_appliend_on_fingers, multi_thread)
             sim_scene.command_remain_origin(multi_thread)
@@ -283,7 +285,6 @@ class Trajectory_planner():
 
         B = np.absolute(dof_motion_angle_lf) #si valeur absolue est - ou plsu va changer
         value_active_axis_local_ref = np.argmax(B)
-        sign = np.sign(dof_motion_angle_lf[0][value_active_axis_local_ref])
         ref_axis_end_z = np.array([0, 0, 1])
         ref_axis_end_x = np.array([1, 0, 0])
         ref_axis_end_y = np.array([0, 1, 0])
@@ -323,7 +324,6 @@ class Trajectory_planner():
             ref_Y_LinkFrame_in_wf = quaternion_rotate_vector(quat_array,ref_axis_end_y)
             ref_Z_LinkFrame_in_wf = quaternion_rotate_vector(quat_array,ref_axis_end_z)
 
-            print("stop debug here")
             O_link_frame_wf_debug = O_link_frame_wf
             ref_X_LinkFrame_in_wf_debug = ref_X_LinkFrame_in_wf
             ref_Y_LinkFrame_in_wf_debug = ref_Y_LinkFrame_in_wf
@@ -366,7 +366,6 @@ class Trajectory_planner():
                                              color=(0, 0, 1.0, 0.5))
             sim_scene.scene.draw_debug_sphere(O_link_frame_wf_debug, radius=0.1, color=(1.0, 0.0, 0.0, 0.5))
 
-        num_points = 100
         O_point_wf = O_link_frame_wf
         if multi_thread=="GPU_simple":
             Mprime_point_wf = sim_scene.robot.get_pos().cpu().numpy()
@@ -503,7 +502,7 @@ class Trajectory_planner():
 
 
         start_angle_deg = theta_rad * 180 / np.pi
-        delta_deg_angle = 10
+
         increment_total_in_deg = delta_deg_angle
 
         if direction=="positive":
@@ -541,7 +540,7 @@ class Trajectory_planner():
                                               u_vect=OA_vect,
                                               stop_angle=stop_angle_deg,
                                               start_angle=start_angle_deg,
-                                              num_points=100,
+                                              num_points=num_points,
                                               center_point=H_point,
                                                    multi_thread=multi_thread,
                                                    increment_total_in_deg=increment_total_in_deg)
@@ -568,27 +567,11 @@ class Trajectory_planner():
 
         n_step = num_points
         init_action_object_joint_values = sim_scene.object.get_qpos()
-        """
-        if multi_thread != "GPU_parallel":
-            for i in range(n_step):
-                pos_robot_in_trajectory = [x_list[n_waypoint], y_list[n_waypoint], z_list[n_waypoint]]
-                sim_scene.robot.set_dofs_kp(kp=np.array([100, 100, 100]),dofs_idx_local=[0, 1, 2] )
-                sim_scene.robot.control_dofs_position(np.array(pos_robot_in_trajectory), [0, 1, 2])
-                for _ in range(100):
-                    sim_scene.robot.control_dofs_force(np.array([hard_force_appliend_on_fingers, hard_force_appliend_on_fingers]), sim_scene.finger_items_number)
-                    sim_scene.object.set_dofs_position([0, 0, 0, 0, 0, 0], [0, 1, 2, 3, 4, 5])
-                    sim_scene.scene.step()
-                n_waypoint += 1
-            difference_init_end_action_joint_value = sim_scene.how_actionable_grasp(
-                    multi_thread=multi_thread,
-                    init_action_object_joint_values=init_action_object_joint_values)
-                #sim_scene.scene.clear_debug_objects()
-        else :
-        """
+
         sim_scene.set_kp_parameters(multi_thread)
         for i in range(n_step):
             sim_scene.command_pos_of_robot(x_list, y_list, z_list, n_waypoint, multi_thread)
-            for _ in range(100):
+            for _ in range(nbr_step_for_one_command):
                 sim_scene.command_pos_of_object_static(multi_thread)
                 sim_scene.apply_force_on_robot(hard_force_appliend_on_fingers, multi_thread)
                 sim_scene.scene.step()
