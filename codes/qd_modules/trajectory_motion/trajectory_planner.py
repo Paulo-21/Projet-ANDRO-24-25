@@ -251,7 +251,7 @@ class Trajectory_planner():
 
     def apply_rotation_arround_articulation(self,sim_scene, nbr_item_joint_studied=3, multi_thread=None,  geometric_debug=True,direction="positive"):
 
-        display_debug_geometry = True
+        display_debug_geometry = False
         display_force_array = False
         trajectory_geometric_debug = True #display trajectroy motion
         nbr_step_for_one_command = 100 # sans debug100
@@ -274,9 +274,9 @@ class Trajectory_planner():
                 contact_right_arrow = contact_arrows[2].cpu().numpy()
                 print("contact_left_arrow", contact_left_arrow)
                 print("contact_right_arrow", contact_right_arrow)
-
-                sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_left_arrow, radius=0.0006, color=vert)
-                sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_right_arrow, radius=0.0006, color=rouge)
+                if display_debug_geometry:
+                    sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_left_arrow, radius=0.0006, color=vert)
+                    sim_scene.scene.draw_debug_arrow([0, 0, 0], 10 * contact_right_arrow, radius=0.0006, color=rouge)
             sim_scene.scene.step()
 
         print("End of applying small control force")
@@ -315,7 +315,6 @@ class Trajectory_planner():
             raise Exception('erreur dans l affectation de l axe actif')
 
         if multi_thread=="GPU_simple":
-
             quat_array = np.array([quat_pyquat[0],quat_pyquat[1],quat_pyquat[2],quat_pyquat[3]])
             ref_axis_orthogonal_to_active_direction_world_frame = quaternion_rotate_vector(quat_array,ref_axis_orthogonal_to_active_direction_local_frame)
             ref_axis_orthogonal2_to_active_direction_world_frame= quaternion_rotate_vector(quat_array,ref_axis_orthogonal2_to_active_direction_local_frame)
@@ -359,7 +358,7 @@ class Trajectory_planner():
             ref_X_LinkFrame_in_wf_debug =ref_X_LinkFrame_in_wf_torch.cpu()[0]
             ref_Y_LinkFrame_in_wf_debug = ref_Y_LinkFrame_in_wf_torch.cpu()[0]
             ref_Z_LinkFrame_in_wf_debug = ref_Z_LinkFrame_in_wf_torch.cpu()[0]
-        if geometric_debug:
+        if display_debug_geometry:
             sim_scene.scene.draw_debug_arrow(O_link_frame_wf_debug, 0.3 * ref_X_LinkFrame_in_wf_debug, radius=0.01,
                                              color=(1, 0, 0, 0.5))
             sim_scene.scene.draw_debug_arrow(O_link_frame_wf_debug, 0.3 * ref_Y_LinkFrame_in_wf_debug, radius=0.01,
@@ -391,7 +390,8 @@ class Trajectory_planner():
         elif multi_thread=="GPU_parallel":
             O_point_wf_debug =O_point_wf.cpu()[0].numpy()
             OMprime_vect_debug =  OMprime_vect.cpu()[0].numpy()
-        sim_scene.scene.draw_debug_arrow(O_point_wf_debug, OMprime_vect_debug, radius=0.006, color=jaune)
+        if display_debug_geometry:
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, OMprime_vect_debug, radius=0.006, color=jaune)
         # Projete dans le repere de l articulation
         if multi_thread=="GPU_simple":
             OMprime_on_OA_vect = np.dot(OMprime_vect, OA_vect) * OA_vect
@@ -494,13 +494,12 @@ class Trajectory_planner():
             mask = sign_active_axis != sign_rot
             theta_rad[mask] = -theta_rad[mask]
 
-
-
-        sim_scene.scene.draw_debug_arrow(H_point_debug, 3*HMprime_vect_debug, radius=0.0006, color=bordeaux)
-        sim_scene.scene.draw_debug_arrow(O_point_wf_debug, 3*OMprime_on_R2_vect_debug, radius=0.0006, color=bordeaux)
-        sim_scene.scene.draw_debug_arrow(H_point_debug,  HMprime_vect_debug, radius=0.003, color=bordeaux)
-        sim_scene.scene.draw_debug_arrow(O_point_wf_debug,  OR2_vect_wf_debug, radius=0.003, color=bordeaux)
-        #sim_scene.scene.draw_debug_arrow(O_point_wf, 3 * OMprime_on_R2_vect, radius=0.006, color=bordeaux)
+        if display_debug_geometry:
+            sim_scene.scene.draw_debug_arrow(H_point_debug, 3*HMprime_vect_debug, radius=0.0006, color=bordeaux)
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, 3*OMprime_on_R2_vect_debug, radius=0.0006, color=bordeaux)
+            sim_scene.scene.draw_debug_arrow(H_point_debug,  HMprime_vect_debug, radius=0.003, color=bordeaux)
+            sim_scene.scene.draw_debug_arrow(O_point_wf_debug,  OR2_vect_wf_debug, radius=0.003, color=bordeaux)
+            #sim_scene.scene.draw_debug_arrow(O_point_wf, 3 * OMprime_on_R2_vect, radius=0.006, color=bordeaux)
 
 
         start_angle_deg = theta_rad * 180 / np.pi
@@ -526,15 +525,16 @@ class Trajectory_planner():
             stop_angle_rad_debug=stop_angle_rad[0].cpu().numpy()[0]
             vect_reference_radius_theta_zero_debug=vect_reference_radius_theta_zero[0].cpu().numpy()
 
-        test_lispace_debug = np.linspace(0,theta_rad_debug,20)
-        for theta_rad_debug in test_lispace_debug:
-            rotation_matrix_start_debug = self.rotation_matrix_theta_around_axisU(u=OA_vect_debug, theta_rad=theta_rad_debug)
-            rotation_matrix_stop_debug = self.rotation_matrix_theta_around_axisU(u=OA_vect_debug, theta_rad=stop_angle_rad_debug)
-            start_vect_debug  = np.dot(rotation_matrix_start_debug, vect_reference_radius_theta_zero_debug)
-            stop_vect_debug = np.dot(rotation_matrix_stop_debug, vect_reference_radius_theta_zero_debug)
+        if display_debug_geometry:
+            test_lispace_debug = np.linspace(0,theta_rad_debug,20)
+            for theta_rad_debug in test_lispace_debug:
+                rotation_matrix_start_debug = self.rotation_matrix_theta_around_axisU(u=OA_vect_debug, theta_rad=theta_rad_debug)
+                rotation_matrix_stop_debug = self.rotation_matrix_theta_around_axisU(u=OA_vect_debug, theta_rad=stop_angle_rad_debug)
+                start_vect_debug  = np.dot(rotation_matrix_start_debug, vect_reference_radius_theta_zero_debug)
+                stop_vect_debug = np.dot(rotation_matrix_stop_debug, vect_reference_radius_theta_zero_debug)
 
-            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, start_vect_debug, radius=0.001, color=vert_canard)
-            sim_scene.scene.draw_debug_arrow(O_point_wf_debug, stop_vect_debug, radius=0.001, color=vert_canard)
+                sim_scene.scene.draw_debug_arrow(O_point_wf_debug, start_vect_debug, radius=0.001, color=vert_canard)
+                sim_scene.scene.draw_debug_arrow(O_point_wf_debug, stop_vect_debug, radius=0.001, color=vert_canard)
 
 
         x_list, y_list, z_list = self.generate_arc(
@@ -560,15 +560,23 @@ class Trajectory_planner():
                 y = y_list_debug[i]
                 z = z_list_debug[i]
                 if i==0:
-                    sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.02, color=[0,1,0,1])
+                    if display_debug_geometry:
+                        sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.02, color=[0,1,0,1])
+                    else :
+                        pass
                 elif i==(num_points-1):
-                    sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.02, color=[1, 0, 0, 1])
+                    if display_debug_geometry:
+                        sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.02, color=[1, 0, 0, 1])
+                    else:
+                        pass
                 else:
-                    sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.01, color=jaune)
+                    if display_debug_geometry:
+                        sim_scene.scene.draw_debug_sphere(np.array([x, y, z]), radius=0.01, color=jaune)
+                    else:
+                        pass
         n_waypoint = 0
 
         n_step = num_points
-
 
         sim_scene.set_kp_parameters(multi_thread)
         for i in range(n_step):
