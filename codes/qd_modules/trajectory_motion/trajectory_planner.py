@@ -251,7 +251,7 @@ class Trajectory_planner():
 
     def apply_rotation_arround_articulation(self,sim_scene, nbr_item_joint_studied=3, multi_thread=None,  geometric_debug=True,direction="positive"):
 
-        display_debug_geometry = False
+        display_debug_geometry = True
         display_force_array = False
         trajectory_geometric_debug = True #display trajectroy motion
         nbr_step_for_one_command = 100 # sans debug100

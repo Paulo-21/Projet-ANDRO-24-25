@@ -269,10 +269,7 @@ class Genesis_scene_simulation():
             )
 
             for i in range(120):
-                self.robot.control_dofs_force(
-                    np.array([-1, -1]),
-                    self.finger_items_number,
-                )
+                self.robot.control_dofs_force(np.array([-1, -1]),self.finger_items_number, )
                 self.robot.set_dofs_position(np.array([0]), [0])
                 self.scene.step()
                 if (i == 99):

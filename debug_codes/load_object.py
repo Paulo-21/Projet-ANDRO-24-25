@@ -14,6 +14,12 @@ import json
 from scipy.spatial.transform import Rotation as R
 from os import listdir
 from os.path import isfile, join
+import pdb
+
+import numpy as np
+import genesis as gs
+import os
+import torch
 
 def load_object_position(loader, path_obj_to_grasp, genotype_pose_object,scene):
 
@@ -66,14 +72,15 @@ def main():
     path_panda = "/home/mathilde/Documents/codes/qd_action_project/robots/panda_gripper.urdf"
     robot = loader.load(path_panda)
 
-    genotype_pose_robot =  [-0.733, -0.309, 0.052, 0.059, 0.720, -0.026, 0.691] # [-0.5, 0, 0, 1, 0, 0, 0]
+    genotype_pose_robot =  [0, 0, 1, 1, 0, 0, 0] # [-0.5, 0, 0, 1, 0, 0, 0]
     tabletop_pose = sapien.Pose(
         p=genotype_pose_robot[0:3],
         q=genotype_pose_robot[3:8]
     )
     robot.set_pose(tabletop_pose)
     nbr_obj =  7310
-    lababo ="/home/mathilde/Documents/codes/qd_action_project/partnet-mobility-dataset/" +str(nbr_obj) + "/mobility.urdf"
+   # lababo ="/home/mathilde/Documents/codes/qd_action_project/partnet-mobility-dataset/" +str(nbr_obj) + "/mobility.urdf"
+    lababo = "/home/mathilde/Documents/codes/onehsape_to_urdf_mathilde/assembly/robot.urdf"
     rescaledobj =  lababo #"/home/mathildek/Documents/codes/qd_action_project/PartNetMobility_partial_dataset/100658/mobility.urdf"#"/home/mathildek/Documents/codes/articulated_object_sapien/object_sapien/3398_rescaled/mobility.urdf"
 
     genotype_pose_object = [0,
