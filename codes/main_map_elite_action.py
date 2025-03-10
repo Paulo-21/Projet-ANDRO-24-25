@@ -41,7 +41,7 @@ def argument_management():
     parser.add_argument('--replay_indx', default='None', choices=['3', '4'], help='')
     parser.add_argument('--obj_name', default='Refrigerator', choices=['grille_pain', 'laptop', 'carton', 'Refrigerator'], help='')
     parser.add_argument('--action', default='rotate_around_joint',
-                        choices=['close_finger', 'rotate_around_joint', 'push_forward', 'push_right'], help='')
+                        choices=['close_finger', 'rotate_around_joint', 'push_forward', 'push_right','shaking'], help='')
 
     args = parser.parse_args()
     print(vars(args))

@@ -80,7 +80,7 @@ def main():
     robot.set_pose(tabletop_pose)
     nbr_obj =  7310
    # lababo ="/home/mathilde/Documents/codes/qd_action_project/partnet-mobility-dataset/" +str(nbr_obj) + "/mobility.urdf"
-    lababo = "/home/mathilde/Documents/codes/onehsape_to_urdf_mathilde/assembly/robot.urdf"
+    lababo cod= "/home/mathilde/Documents/codes/onehsape_to_urdf_mathilde/assembly/robot.urdf"
     rescaledobj =  lababo #"/home/mathildek/Documents/codes/qd_action_project/PartNetMobility_partial_dataset/100658/mobility.urdf"#"/home/mathildek/Documents/codes/articulated_object_sapien/object_sapien/3398_rescaled/mobility.urdf"
 
     genotype_pose_object = [0,
