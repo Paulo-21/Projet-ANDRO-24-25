@@ -33,7 +33,7 @@ plane = scene.add_entity(
 franka = scene.add_entity(
     gs.morphs.MJCF(file='xml/franka_emika_panda/panda.xml'),
 )
-assembly_path ="/home/mathilde/Documents/codes/qd_action_project_2/partnet-mobility-dataset/100658/mobility.urdf"
+assembly_path =os.getcwd() + "/partnet-mobility-dataset/100658/mobility.urdf"
 offset_carton = np.array([0, 1.3, 0.31881])
 carton = scene.add_entity(
     gs.morphs.URDF(file=assembly_path, pos=(offset_carton[0], offset_carton[1], offset_carton[2])),

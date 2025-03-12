@@ -54,6 +54,7 @@ nvidia-cusparselt-cu12==0.6.2
 nvidia-nccl-cu12==2.21.5
 nvidia-nvjitlink-cu12==12.4.127
 nvidia-nvtx-cu12==12.4.127
+ompl @ file:///home/mathildek/Downloads/ompl-1.6.0-cp312-cp312-manylinux_2_28_x86_64.whl#sha256=eaa45b225af7c436c0b386063a2550d079893dca214f84b714e73a99c9294d8c
 opencv-python==4.11.0.86
 OpenEXR==3.3.2
 packaging==24.2
