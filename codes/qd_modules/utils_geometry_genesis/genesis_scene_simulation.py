@@ -40,6 +40,9 @@ class Genesis_scene_simulation():
         self.translationZ_items_number = None
         self.all_tuple_object = None
         self.all_tuple_robot = None
+        self.panda_rightfinger_link_nbr =None
+        self.panda_leftfinger_link_nbr =None
+        self.object_actionable_joint_items =None
 
     def init_robot_path(self, gripper):
         curent_working_directory = os.getcwd()
@@ -213,11 +216,19 @@ class Genesis_scene_simulation():
         self.all_tuple_object = [(self.object.joints.__getitem__(i).dof_idx_local, self.object.joints.__getitem__(i).name)
                                 for i in
                                 range(len(self.object.joints))]
+        self.all_object_ind= [
+            self.object.joints.__getitem__(i).dof_idx_local
+            for i in
+            range(len(self.object.joints))]
+        self.object_actionable_joint_items = self.all_object_ind[1:]
+
         self.finger_items_tuple = [(self.robot.joints.__getitem__(i).dof_idx_local, self.robot.joints.__getitem__(i).name) for i in
                               range(len(joints_list_robot)) if
                               self.robot.joints.__getitem__(i).name == "panda_finger_joint1" or self.robot.joints.__getitem__(
                                   i).name == "panda_finger_joint2"]
         self.finger_items_number = [i for (i, j) in self.finger_items_tuple] #12 et 13 :)
+        self.panda_leftfinger_link_nbr = [i for i in range(len(joints_list_robot)) if  self.robot.links.__getitem__(i).name=="panda_leftfinger"][0]
+        self.panda_rightfinger_link_nbr = [i for i in range(len(joints_list_robot)) if  self.robot.links.__getitem__(i).name=="panda_rightfinger"][0]
         self.translationX_items_number = 0
         self.translationY_items_number = 1
         self.translationZ_items_number = 2
@@ -238,6 +249,7 @@ class Genesis_scene_simulation():
                                                                         i).name == "translationZ"][0]
         """
         self.set_scene_physics_properties()
+        # self.robot.links[1].geoms[0]
         # Question : est ce qu on attache la base fixe pour pas que l objet se fasse emporter ou est ce qu on met plus de poid su l objet a la base plutot (pour l instant éeme cas)
         #TODO same for rotation :)
 
@@ -245,8 +257,8 @@ class Genesis_scene_simulation():
         self.object.set_friction(1.0)
         self.robot.set_friction(1.0)
         masses_object = self.object.get_links_inertial_mass()
-        masses_object_scaled = masses_object
-        masses_object_scaled[0] = masses_object[0] * 10000
+        masses_object_scaled = masses_object #*(1/10)
+        #masses_object_scaled[0] = masses_object[0] * 10000
         self.object.set_links_inertial_mass(masses_object_scaled)
 
         self.object.set_friction(1.0)
@@ -254,6 +266,53 @@ class Genesis_scene_simulation():
         masses_robot_scaled = masses_robot
 
         self.robot.set_links_inertial_mass(masses_robot_scaled)
+    def display_contact(self):
+        contacts = self.robot.get_contacts()
+        pos_contacts = self.robot.get_contacts()["position"]
+        pos_list = [pos for pos in pos_contacts]
+        for i in range(len(pos_list)):
+            self.scene.draw_debug_sphere(pos_list[i], radius=0.005, color=(1.0, 0.0, 0.0, 0.5))
+    def shake_action(self,multi_thread):
+        self.display_contact()
+        pdb.set_trace()
+        nsptep_closure=500
+        kp_gain=0.1
+        self.robot.set_dofs_kp([kp_gain,kp_gain,kp_gain], [0,1,2])
+        timelapse = np.array([200,250,300,350])*1000
+        path_lenght = 1
+        for i in range(timelapse[3]):
+            #self.robot.control_dofs_position([-1],   [self.translationX_items_number], )
+            self.object.set_dofs_position(np.zeros(len(self.object_actionable_joint_items)), self.object_actionable_joint_items, )
+            if i<timelapse[0]:
+                force = 0.02
+                self.robot.control_dofs_force(np.array([-force, -force]), self.finger_items_number, )
+
+            elif i>(timelapse[0]-1) and i<(timelapse[1]):
+                print('case1 : X')
+                force = 1.5
+                self.robot.control_dofs_force(np.array([-force, -force]), self.finger_items_number, )
+                self.robot.control_dofs_position([-path_lenght], [self.translationX_items_number], )
+            elif i > (timelapse[1] - 1) and i < (timelapse[2]):
+                print('case2 : Y')
+                force = 1.5
+                self.robot.control_dofs_force(np.array([-force, -force]), self.finger_items_number, )
+                self.robot.control_dofs_position([path_lenght], [self.translationY_items_number], )
+            elif i > (timelapse[2] - 1) and i < (timelapse[3]):
+                print('case3 : Z')
+                force = 1.5
+                self.robot.control_dofs_force(np.array([-force, -force]), self.finger_items_number, )
+                self.robot.control_dofs_position([path_lenght], [self.translationZ_items_number], )
+            else:
+                raise ValueError("pb i value")
+
+            #self.object.set_dofs_position(np.array([0]), [0])
+            self.scene.step()
+            pos = self.robot.get_pos().cpu().numpy()
+            self.scene.draw_debug_sphere(pos, radius=0.005, color=(0, 1, 0.0, 0.5))
+           # self.display_contact()
+            #self.scene.clear_debug_objects()
+        pdb.set_trace()
+
 
     def close_finger_action(self,multi_thread):
         "mode parallel and not parallel"
@@ -267,12 +326,13 @@ class Genesis_scene_simulation():
                 kv=np.array([5, 5]),
                 dofs_idx_local=self.finger_items_number,
             )
-
-            for i in range(120):
+            self.scene.step()
+            nsptep_closure = 120
+            for i in range(nsptep_closure):
                 self.robot.control_dofs_force(np.array([-1, -1]),self.finger_items_number, )
-                self.robot.set_dofs_position(np.array([0]), [0])
+                self.object.set_dofs_position(np.array([0]), [0])
                 self.scene.step()
-                if (i == 99):
+                if (i == (nsptep_closure-1)):
                     [rigth_finger_is_touching, left_finger_is_touching] = self.find_fingers_contact(multi_thread=multi_thread)
             return [rigth_finger_is_touching, left_finger_is_touching]
 
@@ -293,6 +353,9 @@ class Genesis_scene_simulation():
                     tensor_rigth_finger_is_touching_left_finger_is_touching = self.find_fingers_contact(multi_thread=multi_thread)
 
             return tensor_rigth_finger_is_touching_left_finger_is_touching
+
+
+
     def get_list_of_object_joint_values(self, multi_thread):
         tensor_link_quat_list = self.object.get_links_quat()
         return tensor_link_quat_list
@@ -377,9 +440,9 @@ class Genesis_scene_simulation():
         if is_there_contact == False:
             return right_finger_is_touching, left_finger_is_touching
         else:
-            if (7 in indx_contact):
+            if (self.panda_rightfinger_link_nbr in indx_contact):
                 right_finger_is_touching = True
-            if (8 in indx_contact):
+            if (self.panda_leftfinger_link_nbr in indx_contact):
                 left_finger_is_touching = True
             return right_finger_is_touching, left_finger_is_touching
 

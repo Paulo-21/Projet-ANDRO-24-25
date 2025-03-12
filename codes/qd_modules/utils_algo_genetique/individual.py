@@ -55,6 +55,25 @@ class Individual():
             result_queue.put(archive_element)
         return archive_element
 
+    def evaluate_action_for_one_individual_shaking_action(self,simulator_scene_simualtion,
+                                                                                       individual_genotype,
+                                                                                       archive,
+                                                                                       result_queue,
+                                                                                       generation_mode,
+                                                                                       multi_thread):
+
+        fitness_info_close = simulator_scene_simualtion.close_finger_action(multi_thread=multi_thread)
+        if fitness_info_close!=[True,True]:
+            fitness_info_close_and_shake=0
+        else :
+            fitness_info_close_and_shake = simulator_scene_simualtion.shake_action(multi_thread=multi_thread)
+
+        pdb.set_trace()
+        archive_element = self.affect_fitness_from_left_right_touching_finger_one_sample_scene_close_finger(
+            fitness_info, individual_genotype, simulator_scene_simualtion, result_queue, generation_mode,
+            action_mode=archive.dynamic_application)
+        return archive_element
+
     def evaluate_action_for_one_individual_rotate_around_joint(self, action, multi_thread, individual_genotype, simulator_scene_simulation, generation_mode, result_queue, nbr_item_joint_studied):
         geometric_debug=True
         direction = "positive" #"negative"
@@ -150,6 +169,14 @@ class Individual():
                                                                                                generation_mode=generation_mode,
                                                                                                result_queue=result_queue,
                                                                                                nbr_item_joint_studied=nbr_item_joint_studied)
+            elif  archive.dynamic_application == "shaking":
+                archive_element = self.evaluate_action_for_one_individual_shaking_action(
+                    simulator_scene_simualtion=simulator_scene_simualtion,
+                    individual_genotype=individual_genotype,
+                    archive=archive,
+                    result_queue=result_queue,
+                    generation_mode=generation_mode,
+                    multi_thread=multi_thread)
 
 
             else :
