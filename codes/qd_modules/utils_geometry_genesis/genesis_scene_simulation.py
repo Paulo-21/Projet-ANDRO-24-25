@@ -277,8 +277,10 @@ class Genesis_scene_simulation():
         pdb.set_trace()
         nsptep_closure=500
         kp_gain=0.1
+        self.robot.set_friction(1)
+        self.object.set_friction(1)
         self.robot.set_dofs_kp([kp_gain,kp_gain,kp_gain], [0,1,2])
-        timelapse = np.array([200,250,300,350])*1000
+        timelapse = np.array([200,250,300,350])
         path_lenght = 1
         for i in range(timelapse[3]):
             #self.robot.control_dofs_position([-1],   [self.translationX_items_number], )

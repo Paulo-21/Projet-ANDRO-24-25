@@ -21,7 +21,7 @@ scene = gs.Scene(
     ),
     sim_options=gs.options.SimOptions(
         dt=0.01,
-        gravity=(0, 0, -9.81),
+        gravity=(0, 0, 0),
     ),
     show_viewer=True,
     show_FPS=False,
@@ -68,6 +68,7 @@ qpos = franka.inverse_kinematics(
     pos  = consigne[:3]+offset_carton,#np.array([0.65, 0.0, 0.25]),
     quat = consigne[3:] #np.array([0, 1, 0, 0]),
 )
+fingers_dof = np.arange(7, 9)
 # gripper open pos
 qpos[-2:] = 0.04
 path = franka.plan_path(
@@ -78,6 +79,7 @@ for i in range(5):
     pos = carton.links[i].pos+offset_carton
     scene.draw_debug_sphere(pos, radius=0.05, color=(0, 1, 0.0, 0.5))
 
+
 # execute the planned path
 for waypoint in path:
     franka.control_dofs_position(waypoint)
@@ -85,6 +87,16 @@ for waypoint in path:
 
 for i in range(100):
     print(i)
-
     scene.step()
+
+tensor_kp = franka.get_dofs_kp()
+tensor_kp_sclaed = tensor_kp*(0)
+franka.set_dofs_kp(tensor_kp_sclaed.cpu().numpy()[:7],[0,1,2,3,4,5,6])
+carton.set_friction(5)
+franka.set_friction(5)
+for i in range(100000):
+    franka.control_dofs_force(np.array([-0.5, -0.5]), fingers_dof)
+    scene.step()
+    print(i)
+
 pdb.set_trace()
