@@ -42,6 +42,7 @@ def argument_management():
     parser.add_argument('--obj_name', default='Refrigerator', choices=['grille_pain', 'laptop', 'carton', 'Refrigerator'], help='')
     parser.add_argument('--action', default='rotate_around_joint',
                         choices=['close_finger', 'rotate_around_joint', 'push_forward', 'push_right','shaking'], help='')
+    parser.add_argument('--robot', default='end_effector', choices=['entire_robot'])
 
     args = parser.parse_args()
     print(vars(args))
@@ -52,22 +53,23 @@ def argument_management():
     replay_indx = args.replay_indx
     obj_name = args.obj_name
     action = args.action
+    robot = args.robot
 
     if multi_thread == True and render_mode:
         raise ValueError(
             "Erreur : multi_thread est activé mais render_mode est désactivé. Veuillez activer render_mode pour utiliser multi_thread.")
     print("before QD")
-    return multi_thread, render_mode, generation_mode, version, replay_indx, obj_name, action
+    return multi_thread, render_mode, generation_mode, version, replay_indx, obj_name, action, robot
 
 def main():
     artificial_bb = 2 * 0.5 # TODO Faire une bounding box de la taille
 
-    multi_thread, render_mode, generation_mode, version, replay_indx, obj_name, action= argument_management()
+    multi_thread, render_mode, generation_mode, version, replay_indx, obj_name, action, robot = argument_management()
 
     my_QD_algo = QD_algorithm(Name="Fist_name",
             biased_selection = True,
-            nb_generations=3000,
-            pop_size=4,
+            nb_generations=100,
+            pop_size=100,
             coefxyz_mutation=0.1,
             dynamic_application= action,
             bootstrap=True,
@@ -75,16 +77,20 @@ def main():
             multi_thread=multi_thread,
             render_mode=render_mode,
             generation_mode=generation_mode,
-            gripper="panda",
+            gripper=robot,
             artificial_bb = artificial_bb,
             replay_indx=replay_indx,
             version = version,
             simu=simu,
-            nbr_item_joint_studied=1)
+            nbr_item_joint_studied=1
+            )
     my_QD_algo.init_QD_algo()
     my_QD_algo.first_generation()
     my_QD_algo.genereation_iteration_process()
+
     print("end debbugging")
+    save_data = pd.DataFrame.from_dict(my_QD_algo.archive.archive_map)
+    save_data2 = save_data.T
     pdb.set_trace()
     """
 

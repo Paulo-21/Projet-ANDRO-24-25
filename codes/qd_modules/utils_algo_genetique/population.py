@@ -73,9 +73,10 @@ class Population(Individual):
     def evaluate_action_for_tensor_population(self, action, simulator_scene_simualtion):
         simulator_scene_simualtion.load_object(multi_thread="GPU_parallel")
         simulator_scene_simualtion.load_robot_parallel(pop_size=self.pop_size)
-        simulator_scene_simualtion.set_up_init_robot_pos_and_quat(self.pop_size, self.pop_list)
-        simulator_scene_simualtion.define_joint_and_scalar_to_activate_close_action()
 
+        simulator_scene_simualtion.torch_set_up_init_robot_pos_and_quat(pop_size=self.pop_size,pop_list= self.pop_list)
+        simulator_scene_simualtion.define_joint_and_scalar_to_activate_close_action()
+        simulator_scene_simualtion.scene.step()
         if action=="close_finger":
             tensor_fitness_info = simulator_scene_simualtion.close_finger_action(multi_thread="GPU_parallel")
             archive_element_from_one_tensor = self.affect_fitness_from_left_right_touching_finger_tensor_scene_close_finger(fitness_info=tensor_fitness_info)
@@ -101,6 +102,7 @@ class Population(Individual):
                 fitness_info=tensor_fitness_info)
         else :
             raise ValueError("pas bonne action")
+
         return archive_element_from_one_tensor
 
 

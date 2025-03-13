@@ -43,16 +43,24 @@ class Genesis_scene_simulation():
         self.panda_rightfinger_link_nbr =None
         self.panda_leftfinger_link_nbr =None
         self.object_actionable_joint_items =None
+        self.path_panda =None
+        self.finger_items_number = None
+        self.plane = None
+
+
 
     def init_robot_path(self, gripper):
         curent_working_directory = os.getcwd()
-        if gripper=="panda":
+        if gripper=="end_effector":
             self.path_panda = curent_working_directory + "/robots/panda_gripper.urdf"
+        elif gripper=="entire_robot":
+            self.path_panda = curent_working_directory + "/robots/panda/panda.urdf"
         else :
             raise ValueError(f"Gripper '{gripper}' non pris en charge. Veuillez utiliser 'panda'.")
         return self.path_panda
 
     def init_object_path(self):
+
         return os.getcwd() + "/PartNetMobility_partial_dataset/" + self.object_to_grasp + '/mobility.urdf'
 
     def create_csv_scene_file(self, dynamic_application):
@@ -71,47 +79,50 @@ class Genesis_scene_simulation():
         return csv_scene_name
 
     def load_object(self,multi_thread):
+        self.offset_carton = np.array([0, 1.3, 0.31881])
         if self.object is None :
-            self.object = self.scene.add_entity(
-                gs.morphs.URDF(file=os.getcwd() + '/partnet-mobility-dataset/' + self.object_to_grasp + '/mobility.urdf',
-                               pos=(0, 0, 0),
-                              # euler=(0, 0, 0),  # we follow scipy's extrinsic x-y-z rotation convention, in degrees,
-                               quat  = (1.0, 0.0, 0.0, 0.0), # we use w-x-y-z convention for quaternions,
-                               scale=1.0,
-                               ), )
+            if self.gripper=="end_effector":
+                self.object = self.scene.add_entity(
+                    gs.morphs.URDF(file=os.getcwd() + '/partnet-mobility-dataset/' + self.object_to_grasp + '/mobility.urdf',
+                                   pos=(0, 0, 0),
+                                   quat  = (1.0, 0.0, 0.0, 0.0), # we use w-x-y-z convention for quaternions,
+                                   scale=1.0,
+                                   ), )
+            elif self.gripper=="entire_robot":
+                self.object = self.scene.add_entity(
+                    gs.morphs.URDF(
+                        file=os.getcwd() + '/partnet-mobility-dataset/' + self.object_to_grasp + '/mobility.urdf',
+                        pos=self.offset_carton,
+                        # euler=(0, 0, 0),  # we follow scipy's extrinsic x-y-z rotation convention, in degrees,
+                        quat=(1.0, 0.0, 0.0, 0.0),  # we use w-x-y-z convention for quaternions,
+                        scale=1.0,
+                        ), )
+            else:
+                raise ValueError("pb name gripper")
         else :
-            #self.scene.reset()
             if multi_thread != "GPU_parallel":
-                self.object.set_pos(np.array([0, 0, 0]))
+                if self.gripper=="end_effector":
+                    self.object.set_pos(np.array([0, 0, 0]))
+                elif self.gripper=="entire_robot" :
+                    self.object.set_pos(self.offset_carton)
+                else : raise Exception
                 self.object.set_quat( np.array([1.0, 0.0, 0.0, 0.0]))
+                #TODO rest joint state also
             else :
-                torch_pos= torch.tile(torch.tensor([0, 0,0], device=gs.device), (self.n_envs, 1))
+                if self.gripper=="end_effector":
+                    torch_tensor = torch.tensor([0, 0, 0] , device=gs.device)
+                elif self.gripper=="entire_robot":
+                    torch_tensor = torch.tensor(self.offset_carton, device=gs.device)
+                else: raise Exception
+                torch_pos = torch.tile(torch_tensor, (self.n_envs, 1))
                 torch_quat = torch.tile(torch.tensor([1, 0, 0, 0], device=gs.device), (self.n_envs, 1))
                 self.object.set_pos(torch_pos)
                 self.object.set_quat(torch_quat)
-                print("######################### INIT OBJECT #########################")
 
 
-    def load_robot(self,individual_genotype, multi_thread):
-        pos = tuple(individual_genotype[0:3])
-        quat = tuple(individual_genotype[3:])
-       # q2 = Quaternion(axis=[0, 0, 1], angle=3.14159265 / 2)
-        #quat = quat * q2
-        if self.robot is None:
-            self.robot = self.scene.add_entity(
-                gs.morphs.URDF(file= os.getcwd() +'/robots/panda_gripper.urdf',
-                               pos=pos,
-                               #euler=(0, 0, 90),  # we follow scipy's extrinsic x-y-z rotation convention, in degrees,
-                                quat  =quat, # we use w-x-y-z convention for quaternions,
-                               scale=1.0,
-                               ), )
 
-            print("##### begin build")
-            self.scene.build()
-            print("##### end build")
-        else:
-            self.robot.set_pos(pos)
-            self.robot.set_quat(quat)
+
+
     def set_pos_of_robot(self,x_list, y_list, z_list, n_waypoint, multi_thread) :
         if multi_thread=="GPU_simple":
             self.robot.set_pos([x_list[:,n_waypoint], y_list[n_waypoint], z_list[n_waypoint]])
@@ -143,26 +154,94 @@ class Genesis_scene_simulation():
             #TODO voir comment paralleliser par environement, voir quelles fonctions sont parallelisables
             self.robot.set_dofs_kp(kp=np.array([100, 100, 100]), dofs_idx_local=[0, 1, 2])
 
+    def load_robot(self, individual_genotype, multi_thread):
+        pos = tuple(individual_genotype[0:3])
+        quat = tuple(individual_genotype[3:])
+
+        if self.robot is None:
+            if self.gripper == "end_effector":
+                self.robot = self.scene.add_entity(
+                    gs.morphs.URDF(file=self.path_panda,
+                                   pos=pos,
+                                   # euler=(0, 0, 90),  # we follow scipy's extrinsic x-y-z rotation convention, in degrees,
+                                   quat=quat,  # we use w-x-y-z convention for quaternions,
+                                   scale=1.0,
+                                   ), )
+
+            elif self.gripper == "entire_robot":
+                self.robot = self.scene.add_entity(
+                    gs.morphs.MJCF(file='xml/franka_emika_panda/panda.xml', quat=(1, 0, 0, 0),
+                                   # we use w-x-y-z convention for quaternions,
+                                   scale=1.0))
+                self.plane = self.scene.add_entity(
+                    gs.morphs.Plane(),
+                )
+
+            print("##### begin build")
+            self.scene.build()
+
+            if self.gripper == "entire_robot":
+                self.set_robot_from_end_effector_pos(individual_genotype)
+            print("##### end build")
+        else:
+            if self.gripper == "end_effector":
+                self.robot.set_pos(pos)
+                self.robot.set_quat(quat)
+            elif self.gripper == "entire_robot":
+                self.set_robot_from_end_effector_pos(individual_genotype)
+            else:
+                raise ValueError("pb gripper mode")
+
+    def set_robot_from_end_effector_pos(self, individual_genotype):
+        end_effector = self.robot.get_link('hand')
+        if self.gripper=="end_effector":
+            pre_grasp_pos_quat = self.robot.inverse_kinematics(
+                link=end_effector,
+                pos=individual_genotype[:3] + self.offset_carton,
+                quat=individual_genotype[3:]
+            )
+            self.robot.set_dofs_position(pre_grasp_pos_quat)
+            self.scene.step()
+        elif self.gripper=="entire_robot":
+            pre_grasp_pos_quat = self.robot.inverse_kinematics(
+                link=end_effector,
+                pos=individual_genotype[:,0:3]+ self.offset_carton,
+                quat=individual_genotype[:,3:],
+            )
+            self.robot.set_dofs_position(pre_grasp_pos_quat)
+        else : raise Exception
+
 
 
     def load_robot_parallel(self,pop_size):
+        print("before set or reset")
         if self.robot is None:
-            self.robot = self.scene.add_entity(
-                gs.morphs.URDF(file=os.getcwd() + '/robots/panda_gripper.urdf',
-                               pos=(3,3,3),
-                               # euler=(0, 0, 90),  # we follow scipy's extrinsic x-y-z rotation convention, in degrees,
-                               quat=(1,0,0,0),  # we use w-x-y-z convention for quaternions,
-                               scale=1.0,
-                               ), )
+            if self.gripper=="end_effector":
+                self.robot = self.scene.add_entity(
+                    gs.morphs.URDF(file=os.getcwd() + '/robots/panda_gripper.urdf',
+                                   pos=(3,3,3),
+                                   # euler=(0, 0, 90),  # we follow scipy's extrinsic x-y-z rotation convention, in degrees,
+                                   quat=(1,0,0,0),  # we use w-x-y-z convention for quaternions,
+                                   scale=1.0,
+                                   ), )
+            elif self.gripper=="entire_robot":
+                self.robot = self.scene.add_entity(
+                    gs.morphs.MJCF(file='xml/franka_emika_panda/panda.xml', quat=(1, 0, 0, 0),
+                                   # we use w-x-y-z convention for quaternions,
+                                   scale=1.0))
+
             print("##### begin build parallel")
             self.n_envs = pop_size
-            self.scene.build(n_envs=self.n_envs,) # env_spacing=(5.0, 5.0)
+            self.scene.build(n_envs=self.n_envs, env_spacing=(5.0, 5.0))
+
             print("##### end build parallel")
         else :
             torch_pos = torch.tile(torch.tensor([0, 0, 0], device=gs.device), (self.n_envs, 1))
             torch_quat = torch.tile(torch.tensor([1, 0, 0, 0], device=gs.device), (self.n_envs, 1))
             self.robot.set_pos(torch_pos)
             self.robot.set_quat(torch_quat)
+        self.scene.step()
+
 
     def set_bb(self, artificial_bb):
         "TODO"
@@ -191,15 +270,19 @@ class Genesis_scene_simulation():
             ),
             vis_options=gs.options.VisOptions(
                 show_world_frame=True,  # visualize the coordinate frame of `world` at its origin
+                shadow = False,
+                plane_reflection=False,
                 world_frame_size=1.0,  # length of the world frame in meter
                 show_link_frame=False,  # do not visualize coordinate frames of entity links
                 show_cameras=True,  # do not visualize mesh and frustum of the cameras added
-                plane_reflection=True,  # turn on plane reflection
                 ambient_light=(0.1, 0.1, 0.1),  # ambient light setting
-                n_rendered_envs=1,
+                #n_rendered_envs=1,
 
             ),
 
+        )
+        self.plane = self.scene.add_entity(
+            gs.morphs.Plane(),
         )
 
 
@@ -208,50 +291,36 @@ class Genesis_scene_simulation():
 
 
     def define_joint_and_scalar_to_activate_close_action(self):
-        joints_list_robot = self.robot.joints
-        test_debug_dimension =[(self.robot.joints.__getitem__(i).dof_idx_local, self.robot.joints.__getitem__(i).name) for i in range(len(joints_list_robot)) ]
+        if self.gripper=="end_effector":
+            joints_list_robot = self.robot.joints
+            test_debug_dimension =[(self.robot.joints.__getitem__(i).dof_idx_local, self.robot.joints.__getitem__(i).name) for i in range(len(joints_list_robot)) ]
 
-        self.all_tuple_robot = [(self.robot.joints.__getitem__(i).dof_idx_local, self.robot.joints.__getitem__(i).name) for i in
-                              range(len(joints_list_robot))]
-        self.all_tuple_object = [(self.object.joints.__getitem__(i).dof_idx_local, self.object.joints.__getitem__(i).name)
-                                for i in
-                                range(len(self.object.joints))]
-        self.all_object_ind= [
-            self.object.joints.__getitem__(i).dof_idx_local
-            for i in
-            range(len(self.object.joints))]
-        self.object_actionable_joint_items = self.all_object_ind[1:]
+            self.all_tuple_robot = [(self.robot.joints.__getitem__(i).dof_idx_local, self.robot.joints.__getitem__(i).name) for i in
+                                  range(len(joints_list_robot))]
+            self.all_tuple_object = [(self.object.joints.__getitem__(i).dof_idx_local, self.object.joints.__getitem__(i).name)
+                                    for i in
+                                    range(len(self.object.joints))]
+            self.all_object_ind= [
+                self.object.joints.__getitem__(i).dof_idx_local
+                for i in
+                range(len(self.object.joints))]
+            self.object_actionable_joint_items = self.all_object_ind[1:]
 
-        self.finger_items_tuple = [(self.robot.joints.__getitem__(i).dof_idx_local, self.robot.joints.__getitem__(i).name) for i in
-                              range(len(joints_list_robot)) if
-                              self.robot.joints.__getitem__(i).name == "panda_finger_joint1" or self.robot.joints.__getitem__(
-                                  i).name == "panda_finger_joint2"]
-        self.finger_items_number = [i for (i, j) in self.finger_items_tuple] #12 et 13 :)
-        self.panda_leftfinger_link_nbr = [i for i in range(len(joints_list_robot)) if  self.robot.links.__getitem__(i).name=="panda_leftfinger"][0]
-        self.panda_rightfinger_link_nbr = [i for i in range(len(joints_list_robot)) if  self.robot.links.__getitem__(i).name=="panda_rightfinger"][0]
-        self.translationX_items_number = 0
-        self.translationY_items_number = 1
-        self.translationZ_items_number = 2
-        """
-        self.translationX_items_number = [self.robot.joints.__getitem__(i).dof_idx_local for i in
-                                                                    range(len(joints_list_robot)) if
-                                                                    self.robot.joints.__getitem__(
-                                                                        i).name == "translationX"][0]
-        self.translationY_items_number = [self.robot.joints.__getitem__(i).dof_idx_local
-                                                                    for i in
-                                                                    range(len(joints_list_robot)) if
-                                                                    self.robot.joints.__getitem__(
-                                                                        i).name == "translationY"][0]
-        self.translationZ_items_number = [self.robot.joints.__getitem__(i).dof_idx_local
-                                                                    for i in
-                                                                    range(len(joints_list_robot)) if
-                                                                    self.robot.joints.__getitem__(
-                                                                        i).name == "translationZ"][0]
-        """
-        self.set_scene_physics_properties()
-        # self.robot.links[1].geoms[0]
-        # Question : est ce qu on attache la base fixe pour pas que l objet se fasse emporter ou est ce qu on met plus de poid su l objet a la base plutot (pour l instant éeme cas)
-        #TODO same for rotation :)
+            self.finger_items_tuple = [(self.robot.joints.__getitem__(i).dof_idx_local, self.robot.joints.__getitem__(i).name) for i in
+                                  range(len(joints_list_robot)) if
+                                  self.robot.joints.__getitem__(i).name == "panda_finger_joint1" or self.robot.joints.__getitem__(
+                                      i).name == "panda_finger_joint2"]
+            self.finger_items_number = [i for (i, j) in self.finger_items_tuple] #12 et 13 :)
+            self.panda_leftfinger_link_nbr = [i for i in range(len(joints_list_robot)) if  self.robot.links.__getitem__(i).name=="panda_leftfinger"][0]
+            self.panda_rightfinger_link_nbr = [i for i in range(len(joints_list_robot)) if  self.robot.links.__getitem__(i).name=="panda_rightfinger"][0]
+            self.translationX_items_number = 0
+            self.translationY_items_number = 1
+            self.translationZ_items_number = 2
+            self.set_scene_physics_properties()
+        elif self.gripper=="entire_robot" :
+            self.finger_items_number = np.arange(7, 9)
+        else:
+            raise ValueError("pb gripper")
 
     def set_scene_physics_properties(self):
         self.object.set_friction(1.0)
@@ -317,9 +386,10 @@ class Genesis_scene_simulation():
 
 
     def close_finger_action(self,multi_thread):
-        "mode parallel and not parallel"
         if multi_thread!="GPU_parallel":
             self.robot.set_dofs_position(np.array([0.035, 0.035]), self.finger_items_number)
+            self.robot._get_dofs_idx()
+            pdb.set_trace()
             self.robot.set_dofs_kp(
                 kp=np.array([1000, 1000]),
                 dofs_idx_local=self.finger_items_number,
@@ -343,13 +413,15 @@ class Genesis_scene_simulation():
             #self.object.set_friction(torch_friction)
             #self.robot.set_friction(1.0)
             torch_open_gripper = torch.tile(torch.tensor([0.035, 0.035], device=gs.device), (self.n_envs, 1))
+
             self.robot.set_dofs_position(torch_open_gripper, self.finger_items_number)
+
             for i in range(120):
                 torch_force_control = torch.tile(torch.tensor([-1, -1], device=gs.device), (self.n_envs, 1))
                 self.robot.control_dofs_force(torch_force_control,self.finger_items_number )
 
                 torch_maintain_pos = torch.tile(torch.tensor([0], device=gs.device), (self.n_envs, 1))
-                self.robot.set_dofs_position(torch_maintain_pos, [0])
+                self.object.set_dofs_position(torch_maintain_pos, [0])
                 self.scene.step()
                 if i==119:
                     tensor_rigth_finger_is_touching_left_finger_is_touching = self.find_fingers_contact(multi_thread=multi_thread)
@@ -492,16 +564,23 @@ class Genesis_scene_simulation():
         print('remove_obj')
         self.scene.entities.remove(self.object)
 
-    def set_up_init_robot_pos_and_quat(self, pop_size, pop_list):
+    def torch_set_up_init_robot_pos_and_quat(self, pop_size, pop_list):
         if isinstance(pop_list, list):
             pop_list =np.array(pop_list)
         else:pass
-        pos_list = pop_list[:, [0,1,2]]
-        quat_list = pop_list[:, [-4,-3,-2,-1]]
+        pos_list = pop_list[:, [0, 1, 2]]
+        quat_list = pop_list[:, [-4, -3, -2, -1]]
         tensor_pop_pos_elements = torch.tensor(pos_list, dtype=torch.float64)
         tensor_pop_quat_elements = torch.tensor(quat_list, dtype=torch.float64)
-        self.robot.set_pos(tensor_pop_pos_elements)
-        self.robot.set_quat(tensor_pop_quat_elements)
+        pop_list_torch = torch.cat((tensor_pop_pos_elements, tensor_pop_quat_elements), dim=1)
+        if self.gripper=="end_effector":
+            self.robot.set_pos(tensor_pop_pos_elements)
+            self.robot.set_quat(tensor_pop_quat_elements)
+        elif self.gripper=="entire_robot":
+            self.set_robot_from_end_effector_pos(individual_genotype=pop_list_torch)
+
+        else : raise Exception
+
 
     def command_remain_origin(self, multi_thread):
         dof_idx_local =  [0, 1, 2, 3, 4, 5]
