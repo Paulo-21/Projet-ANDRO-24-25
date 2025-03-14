@@ -99,3 +99,5 @@ Then inside the container run the following command :
 ## Verison 
 
 La scene met du temps a builder la prmiere fois qu on la build, apres c est beaucoup plus ra# quaternions_genesis
+python3 codes/main_map_elite_action.py --robot 'entire_robot' --obj_name "carton" --action "close_finger" --multi_thread "GPU_parallel" --viz 'False'  --render_mode 'False'
+python3 codes/main_map_elite_action.py --robot 'entire_robot' --obj_name "carton" --action "close_finger" --multi_thread "GPU_parallel" --viz 'False'  --render_mode 'False'

@@ -24,7 +24,7 @@ class QD_algorithm(Individual):
         self.simulator_scene_simualtion=None
 
     def init_QD_algo(self):
-        self.archive = Archive(dynamic_application=self.dynamic_application)
+        self.archive = Archive(dynamic_application=self.dynamic_application, stock_path=self.stock_path)
         self.pop = Population(size=self.pop_size, artificial_bb=self.artificial_bb)
         if self.simu == "sapien":
             self.simulator_scene_simualtion = Sapien_scene_simualtion(self.gripper, self.object_to_grasp)
@@ -48,7 +48,7 @@ class QD_algorithm(Individual):
             multi_thread=self.multi_thread,
             generation_mode=self.generation_mode,
             simulator=self.simu,
-            nbr_item_joint_studied=self.nbr_item_joint_studied
+            nbr_item_joint_studied=self.nbr_item_joint_studied,
         )
 
     def genereation_iteration_process(self):
@@ -68,7 +68,7 @@ class QD_algorithm(Individual):
                 generation_mode=self.generation_mode,
                 simulator=self.simu,
             nbr_item_joint_studied=self.nbr_item_joint_studied)
-        self.archive.store_archive_in_csv(action_mode=self.dynamic_application)
+        #self.archive.store_archive_in_csv(action_mode=self.dynamic_application)
         print('end_generation')
 
 

@@ -181,18 +181,18 @@ class Genesis_scene_simulation():
             self.scene.build()
 
             if self.gripper == "entire_robot":
-                self.set_robot_from_end_effector_pos(individual_genotype)
+                self.set_robot_from_end_effector_pos(individual_genotype, multi_thread=multi_thread)
             print("##### end build")
         else:
             if self.gripper == "end_effector":
                 self.robot.set_pos(pos)
                 self.robot.set_quat(quat)
             elif self.gripper == "entire_robot":
-                self.set_robot_from_end_effector_pos(individual_genotype)
+                self.set_robot_from_end_effector_pos(individual_genotype, multi_thread=multi_thread)
             else:
                 raise ValueError("pb gripper mode")
 
-    def set_robot_from_end_effector_pos(self, individual_genotype):
+    def set_robot_from_end_effector_pos(self, individual_genotype,multi_thread):
         end_effector = self.robot.get_link('hand')
         if self.gripper=="end_effector":
             pre_grasp_pos_quat = self.robot.inverse_kinematics(
@@ -203,12 +203,21 @@ class Genesis_scene_simulation():
             self.robot.set_dofs_position(pre_grasp_pos_quat)
             self.scene.step()
         elif self.gripper=="entire_robot":
-            pre_grasp_pos_quat = self.robot.inverse_kinematics(
-                link=end_effector,
-                pos=individual_genotype[:,0:3]+ self.offset_carton,
-                quat=individual_genotype[:,3:],
-            )
-            self.robot.set_dofs_position(pre_grasp_pos_quat)
+            if multi_thread=="GPU_simple":
+                pre_grasp_pos_quat = self.robot.inverse_kinematics(
+                    link=end_effector,
+                    pos=individual_genotype[0:3]+ self.offset_carton,
+                    quat=individual_genotype[3:],
+                )
+                self.robot.set_dofs_position(pre_grasp_pos_quat)
+            if multi_thread=="GPU_parallel":
+                pre_grasp_pos_quat = self.robot.inverse_kinematics(
+                    link=end_effector,
+                    pos=individual_genotype[:, 0:3] + self.offset_carton,
+                    quat=individual_genotype[:, 3:],
+                )
+                self.robot.set_dofs_position(pre_grasp_pos_quat)
+
         else : raise Exception
 
 
@@ -261,7 +270,7 @@ class Genesis_scene_simulation():
                 dt=0.01,
                 gravity = (0,0,0),
             ),
-            show_viewer=render_mode,
+            show_viewer=eval(render_mode),
             viewer_options=gs.options.ViewerOptions(
                 camera_pos=(3.5, 0.0, 2.5),
                 camera_lookat=(0.0, 0.0, 0.5),
@@ -389,7 +398,6 @@ class Genesis_scene_simulation():
         if multi_thread!="GPU_parallel":
             self.robot.set_dofs_position(np.array([0.035, 0.035]), self.finger_items_number)
             self.robot._get_dofs_idx()
-            pdb.set_trace()
             self.robot.set_dofs_kp(
                 kp=np.array([1000, 1000]),
                 dofs_idx_local=self.finger_items_number,
@@ -577,7 +585,7 @@ class Genesis_scene_simulation():
             self.robot.set_pos(tensor_pop_pos_elements)
             self.robot.set_quat(tensor_pop_quat_elements)
         elif self.gripper=="entire_robot":
-            self.set_robot_from_end_effector_pos(individual_genotype=pop_list_torch)
+            self.set_robot_from_end_effector_pos(individual_genotype=pop_list_torch, multi_thread="GPU_parallel")
 
         else : raise Exception
 

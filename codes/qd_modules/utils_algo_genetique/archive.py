@@ -6,11 +6,12 @@ import csv
 import os
 
 class Archive():
-    def __init__(self, dynamic_application):
+    def __init__(self, dynamic_application, stock_path):
         self.archive_map = dict()
         self.dynamic_application=dynamic_application
         self.orderer_archive = None
-        self.archive_name = "test.csv"
+        self.archive_name = stock_path + "/test.csv"
+        self.stock_path=stock_path
 
     def store_one_new_element_in_archive(self, new_archive_element):
         key_element = tuple(new_archive_element["behavior_descriptor"])

@@ -107,7 +107,6 @@ class Population(Individual):
 
 
     def mutate_population_from_selction(self, selection,coefxyz_mutation):
-        coefxyz_mutation = 0.01
         coef_classic_mutattion =0.01
         pop_mutated = []
         for ind in selection:
