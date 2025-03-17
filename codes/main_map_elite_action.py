@@ -13,6 +13,7 @@ from qd_modules.utils_bootstrap.bootstrap_related import *
 from qd_modules.object_informations.object_informations import *
 from qd_modules.utils_archive_analysis.archive_analysis import ArchiveAnalysis
 import argparse
+from PIL import Image
 simu = "genesis"
 
 if simu == "sapien":
@@ -76,7 +77,7 @@ def main():
             biased_selection = True,
             nb_generations=10,
             pop_size=100,
-            coefxyz_mutation=0.1,
+            coefxyz_mutation=0.01,
             dynamic_application= action,
             bootstrap=True,
             object_to_grasp= DICT_OBJECT[obj_name],
@@ -95,41 +96,49 @@ def main():
     if viz=="False":
         my_QD_algo.first_generation()
         my_QD_algo.genereation_iteration_process()
-        save_data = pd.DataFrame.from_dict(my_QD_algo.archive.archive_map)
-        save_data2 = save_data.T
-        path_root = my_QD_algo.stock_path +'/run3.csv'
-        save_data2.to_csv(path_root, index=False)
+
     elif viz=="True" :
-        path_root = my_QD_algo.stock_path +'/run3.csv'
+        path_root = my_QD_algo.stock_path + "/genesis_object_100658_robot_end_effector_close_finger_v4.csv"
         my_analysis = ArchiveAnalysis(path_root)
+        my_QD_algo.simulator_scene_simualtion.init_robot_path(my_QD_algo.gripper)
         my_QD_algo.simulator_scene_simualtion.load_object(multi_thread=multi_thread)
         my_QD_algo.simulator_scene_simualtion.load_robot(np.array([2, 0, 0, 1, 0, 0, 0]), multi_thread=multi_thread)
-
         to_plot_genomes_True= my_analysis.data_frame[my_analysis.data_frame.fitness == 1]["genome"]
         to_plot_genomes_False = my_analysis.data_frame[my_analysis.data_frame.fitness == 0]["genome"]
         print(len(to_plot_genomes_True))
+        if my_QD_algo.gripper =="end_effector":
+            offset= np.array([0, 0, 0])
+        elif my_QD_algo.gripper =="entire_robot":
+            offset = np.array([0, 1.3, 0.31881])
+        else:
+            raise ValueError("pb gripper")
+
         for item in range(len(to_plot_genomes_True)):
             str_genome = to_plot_genomes_True.iloc[item]
             genome_sphere = np.fromstring(str_genome.strip("[]").replace("\n", " "), sep=" ")
-            my_QD_algo.simulator_scene_simualtion.scene.draw_debug_sphere(genome_sphere[0:3]+ np.array([0, 1.3, 0.31881]), radius=0.005, color=(0, 1.0, 0.0, 0.5))
+            my_QD_algo.simulator_scene_simualtion.scene.draw_debug_sphere(genome_sphere[0:3]+offset, radius=0.005, color=(0, 1.0, 0.0, 0.5))
         print(len(to_plot_genomes_False))
+        rgb, depth, segmentation, normal = my_QD_algo.simulator_scene_simualtion.cam.render()
+        image = Image.fromarray(rgb)
+        image.save(my_QD_algo.stock_path+ "_green.png")
 
         for item in range(len(to_plot_genomes_False)):
             str_genome = to_plot_genomes_False.iloc[item]
             genome_sphere = np.fromstring(str_genome.strip("[]").replace("\n", " "), sep=" ")
             my_QD_algo.simulator_scene_simualtion.scene.draw_debug_sphere(
-                genome_sphere[0:3] + np.array([0, 1.3, 0.31881]), radius=0.005, color=(1, 0.0, 0.0, 0.5))
+                genome_sphere[0:3] +offset, radius=0.005, color=(1, 0.0, 0.0, 0.5))
             print("logg", item, "/",len(to_plot_genomes_False) )
+        rgb, depth, segmentation, normal = my_QD_algo.simulator_scene_simualtion.cam.render()
+        image_end=Image.fromarray(rgb)
+        image_end.save(my_QD_algo.stock_path +"_green_red.png")
 
         for i in range(1000):
+            my_QD_algo.simulator_scene_simualtion.cam.render()
             my_QD_algo.simulator_scene_simualtion.scene.step()
     else :
         raise ValueError("viz value")
 
-
-
     pdb.set_trace()
-
 
 
 if __name__ == '__main__':

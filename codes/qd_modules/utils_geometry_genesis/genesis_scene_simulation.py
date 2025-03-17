@@ -29,7 +29,6 @@ class Genesis_scene_simulation():
         self.path_object_to_grasp = self.init_object_path()
         self.robot = None
         self.object = None
-        self.csv_scene_name = None #self.csv_scene_name()
         self.bootstrap_dictionary = BOOTSTRAP_DICTIONARY_HANDMADE
         self.gs_device = None
         self.finger_items_tuple = None
@@ -54,7 +53,7 @@ class Genesis_scene_simulation():
         if gripper=="end_effector":
             self.path_panda = curent_working_directory + "/robots/panda_gripper.urdf"
         elif gripper=="entire_robot":
-            self.path_panda = curent_working_directory + "/robots/panda/panda.urdf"
+            self.path_panda = 'xml/franka_emika_panda/panda.xml'
         else :
             raise ValueError(f"Gripper '{gripper}' non pris en charge. Veuillez utiliser 'panda'.")
         return self.path_panda
@@ -63,20 +62,6 @@ class Genesis_scene_simulation():
 
         return os.getcwd() + "/PartNetMobility_partial_dataset/" + self.object_to_grasp + '/mobility.urdf'
 
-    def create_csv_scene_file(self, dynamic_application):
-        base_path = os.getcwd() + "/results/"
-        csv_scene_name =base_path + "genesis_object_" + self.object_to_grasp + "_robot_" +  self.gripper  + "_"+ dynamic_application + ".csv"
-
-        version = 1
-        while os.path.exists(csv_scene_name):
-            version += 1
-            new_file_name = f"genesis_object_{self.object_to_grasp}_robot_{self.gripper}_{dynamic_application}_v{version}.csv"
-            csv_scene_name = os.path.join(base_path, new_file_name)
-
-        self. csv_scene_name = csv_scene_name
-        file = open(self.csv_scene_name, 'w+')
-
-        return csv_scene_name
 
     def load_object(self,multi_thread):
         self.offset_carton = np.array([0, 1.3, 0.31881])
@@ -170,12 +155,17 @@ class Genesis_scene_simulation():
 
             elif self.gripper == "entire_robot":
                 self.robot = self.scene.add_entity(
-                    gs.morphs.MJCF(file='xml/franka_emika_panda/panda.xml', quat=(1, 0, 0, 0),
+                    gs.morphs.MJCF(file=self.path_panda, quat=(1, 0, 0, 0),
                                    # we use w-x-y-z convention for quaternions,
                                    scale=1.0))
                 self.plane = self.scene.add_entity(
                     gs.morphs.Plane(),
                 )
+            self.cam = self.scene.add_camera(model='pinhole', res=(320*3, 320*3), pos=(0.5, 2.5, 3.5),
+                                                                   lookat=(0, 0, 0), up=(0.0, 0.0, 1.0),
+                                                                   fov=30, aperture=2.0, focus_dist=None, GUI=False,
+                                                                   spp=256, denoise=True,
+                                        )
 
             print("##### begin build")
             self.scene.build()
@@ -197,7 +187,7 @@ class Genesis_scene_simulation():
         if self.gripper=="end_effector":
             pre_grasp_pos_quat = self.robot.inverse_kinematics(
                 link=end_effector,
-                pos=individual_genotype[:3] + self.offset_carton,
+                pos=individual_genotype[:3],
                 quat=individual_genotype[3:]
             )
             self.robot.set_dofs_position(pre_grasp_pos_quat)
@@ -289,9 +279,6 @@ class Genesis_scene_simulation():
 
             ),
 
-        )
-        self.plane = self.scene.add_entity(
-            gs.morphs.Plane(),
         )
 
 

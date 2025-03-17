@@ -50,30 +50,23 @@ class Archive():
         selected_individuals_to_be_mutated = [ self.archive_map[random.choice(keys)]["genome"] for _ in range(size_selection) ]
         return selected_individuals_to_be_mutated
 
-    def create_csv_archive_file(self, dynamic_application, simulator_scene_simualtion, simulator):
-        base_path = os.getcwd() + "/result_archive/"
+    def create_csv_archive_file(self, dynamic_application, simulator_scene_simualtion, simulator, stock_path):
+        base_path = stock_path
         csv_archive_name = base_path + simulator+ "_object_" + simulator_scene_simualtion.object_to_grasp + "_robot_" + simulator_scene_simualtion.gripper + "_" + dynamic_application + ".csv"
         version = 1
         while os.path.exists(csv_archive_name):
             version += 1
-            new_file_name = f"_{simulator}_object_{simulator_scene_simualtion.object_to_grasp}_robot_{simulator_scene_simualtion.gripper}_{dynamic_application}_v{version}.csv"
+            new_file_name = f"{simulator}_object_{simulator_scene_simualtion.object_to_grasp}_robot_{simulator_scene_simualtion.gripper}_{dynamic_application}_v{version}.csv"
             csv_archive_name = os.path.join(base_path, new_file_name)
 
         self.csv_archive_name = csv_archive_name
         file = open(self.csv_archive_name, 'w+')
 
     def store_archive_in_csv(self,action_mode):
-        with open(self.csv_archive_name, 'w') as f:
-            writer = csv.writer(f)
-        for key in self.archive_map:
-            behavior_descriptor = self.archive_map[key]["behavior_descriptor"]
-            genome = self.archive_map[key]["genome"]
-            fitness_info = self.archive_map[key]["fitness"]
-            action_mode = None
-            new_line = pd.DataFrame([[genome, fitness_info, action_mode]], index=None)
-            with open(self.csv_archive_name, 'a') as f:
-                writer = csv.writer(f)
-                writer.writerow(new_line.iloc[0].tolist())
+        save_data = pd.DataFrame.from_dict(self.archive_map)
+        save_data2 = save_data.T
+        path_root = self.stock_path
+        save_data2.to_csv(self.csv_archive_name, index=False)
         print("archive stored")
 
     def store_several_element_in_archive(self, archive_element_from_one_tensor):

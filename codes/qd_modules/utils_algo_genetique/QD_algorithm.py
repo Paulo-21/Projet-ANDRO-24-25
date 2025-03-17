@@ -37,11 +37,11 @@ class QD_algorithm(Individual):
 
     def first_generation(self):
         self.pop.initialize_population(bootstrap=self.bootstrap, simulator_scene_simualtion=self.simulator_scene_simualtion)
-        self.simulator_scene_simualtion.create_csv_scene_file(dynamic_application=self.dynamic_application)
         self.archive.create_csv_archive_file(
             dynamic_application=self.dynamic_application,
             simulator_scene_simualtion=self.simulator_scene_simualtion,
-            simulator=self.simu)
+            simulator=self.simu,
+        stock_path=self.stock_path)
         self.pop.evaluate_population(
             simulator_scene_simualtion=self.simulator_scene_simualtion,
             instance_of_archive=self.archive,
@@ -68,7 +68,7 @@ class QD_algorithm(Individual):
                 generation_mode=self.generation_mode,
                 simulator=self.simu,
             nbr_item_joint_studied=self.nbr_item_joint_studied)
-        #self.archive.store_archive_in_csv(action_mode=self.dynamic_application)
+        self.archive.store_archive_in_csv(action_mode=self.dynamic_application)
         print('end_generation')
 
 
