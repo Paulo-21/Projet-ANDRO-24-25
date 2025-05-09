@@ -22,10 +22,13 @@ class QD_algorithm(Individual):
         self.archive=None
         self.pop=None
         self.simulator_scene_simualtion=None
+        self.total_possible_cells = 20000 * 20000 * 20000 
+        self.coverage = 0 
+
 
     def init_QD_algo(self):
-        self.archive = Archive(dynamic_application=self.dynamic_application, stock_path=self.stock_path)
-        self.pop = Population(size=self.pop_size, artificial_bb=self.artificial_bb)
+        self.archive = Archive(dynamic_application=self.dynamic_application, stock_path=self.stock_path, mutation_operator=self.mutation_operator, coefxyz_mutation = self.coefxyz_mutation, scale_mutation = self.scale_mutation)
+        self.pop = Population(size=self.pop_size, artificial_bb=self.artificial_bb, mutation_operator=self.mutation_operator, coefxyz_mutation = self.coefxyz_mutation, scale_mutation = self.scale_mutation, nb_generations=self.nb_generations)
         if self.simu == "sapien":
             self.simulator_scene_simualtion = Sapien_scene_simualtion(self.gripper, self.object_to_grasp)
         elif self.simu == "genesis":
@@ -41,7 +44,8 @@ class QD_algorithm(Individual):
             dynamic_application=self.dynamic_application,
             simulator_scene_simualtion=self.simulator_scene_simualtion,
             simulator=self.simu,
-        stock_path=self.stock_path)
+            stock_path=self.stock_path
+            )
         self.pop.evaluate_population(
             simulator_scene_simualtion=self.simulator_scene_simualtion,
             instance_of_archive=self.archive,
@@ -60,7 +64,7 @@ class QD_algorithm(Individual):
             else:
                 selected_individuals_to_be_mutated = self.archive.select_random_individuals_from_archive(
                     size_selection=self.pop.pop_size)
-            self.pop.mutate_population_from_selction(selected_individuals_to_be_mutated, self.coefxyz_mutation)
+            self.pop.mutate_population_from_selction(selected_individuals_to_be_mutated, coverage=self.coverage)
             self.pop.evaluate_population(
                 simulator_scene_simualtion=self.simulator_scene_simualtion,
                 instance_of_archive=self.archive,
@@ -68,6 +72,8 @@ class QD_algorithm(Individual):
                 generation_mode=self.generation_mode,
                 simulator=self.simu,
             nbr_item_joint_studied=self.nbr_item_joint_studied)
+            if self.mutation_operator == "cov":
+                self.coverage = len(self.archive.archive_map) / self.total_possible_cells
         self.archive.store_archive_in_csv(action_mode=self.dynamic_application)
         print('end_generation')
 

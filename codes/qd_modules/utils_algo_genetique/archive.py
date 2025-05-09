@@ -6,12 +6,15 @@ import csv
 import os
 
 class Archive():
-    def __init__(self, dynamic_application, stock_path):
+    def __init__(self, dynamic_application, stock_path,mutation_operator,coefxyz_mutation,scale_mutation):
         self.archive_map = dict()
         self.dynamic_application=dynamic_application
         self.orderer_archive = None
-        self.archive_name = stock_path + "/test.csv"
         self.stock_path=stock_path
+
+        self.mutation_operator = mutation_operator
+        self.coefxyz_mutation = coefxyz_mutation
+        self.scale_mutation = scale_mutation
 
     def store_one_new_element_in_archive(self, new_archive_element):
         key_element = tuple(new_archive_element["behavior_descriptor"])
@@ -51,8 +54,11 @@ class Archive():
         return selected_individuals_to_be_mutated
 
     def create_csv_archive_file(self, dynamic_application, simulator_scene_simualtion, simulator, stock_path):
+        '''
         base_path = stock_path
-        csv_archive_name = base_path + simulator+ "_object_" + simulator_scene_simualtion.object_to_grasp + "_robot_" + simulator_scene_simualtion.gripper + "_" + dynamic_application + ".csv"
+        file_name = f"{simulator}_object_{simulator_scene_simualtion.object_to_grasp}_robot_{simulator_scene_simualtion.gripper}_{dynamic_application}_{self.scale_mutation}.csv"
+        csv_archive_name = os.path.join(base_path, file_name)
+        #csv_archive_name = base_path + simulator+ "_object_" + simulator_scene_simualtion.object_to_grasp + "_robot_" + simulator_scene_simualtion.gripper + "_" + dynamic_application + ".csv"
         version = 1
         while os.path.exists(csv_archive_name):
             version += 1
@@ -60,7 +66,52 @@ class Archive():
             csv_archive_name = os.path.join(base_path, new_file_name)
 
         self.csv_archive_name = csv_archive_name
+        simulator_scene_simualtion.csv_scene_name = self.csv_archive_name # add by ziming
+
         file = open(self.csv_archive_name, 'w+')
+        
+        '''
+        base_path = stock_path
+
+        if self.mutation_operator == "gaussian":
+            mutation_value = self.scale_mutation
+        elif self.mutation_operator == "random":
+            mutation_value = self.coefxyz_mutation
+        
+            '''
+            elif self.mutation_operator == "es":
+
+            elif self.mutation_operator == "sa":
+
+            elif self.mutation_operator == "cov":
+            '''
+            
+        else:
+            mutation_value = "unknown"
+
+        file_name = (
+            f"{simulator}_object_{simulator_scene_simualtion.object_to_grasp}"
+            f"_robot_{simulator_scene_simualtion.gripper}"
+            f"_{dynamic_application}_{self.mutation_operator}_{mutation_value}.csv"
+        )
+
+        csv_archive_name = os.path.join(base_path, file_name)
+
+        version = 1
+        while os.path.exists(csv_archive_name):
+            version += 1
+            new_file_name = (
+                f"{simulator}_object_{simulator_scene_simualtion.object_to_grasp}"
+                f"_robot_{simulator_scene_simualtion.gripper}"
+                f"_{dynamic_application}_{self.mutation_operator}_{mutation_value}_v{version}.csv"
+            )
+            csv_archive_name = os.path.join(base_path, new_file_name)
+
+        self.csv_archive_name = csv_archive_name
+        simulator_scene_simualtion.csv_scene_name = self.csv_archive_name
+        file = open(self.csv_archive_name, 'w+')
+
+
 
     def store_archive_in_csv(self,action_mode):
         save_data = pd.DataFrame.from_dict(self.archive_map)

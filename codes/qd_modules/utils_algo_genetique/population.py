@@ -9,11 +9,18 @@ from ..trajectory_motion.trajectory_planner import Trajectory_planner
 
 
 class Population(Individual):
-    def __init__(self, size, artificial_bb):
+    def __init__(self, size, artificial_bb,mutation_operator,coefxyz_mutation,scale_mutation,nb_generations):
         super().__init__(size_individual=7, artificial_bb=artificial_bb)
         self.pop_size=size
         self.pop_list = None
-
+        
+        self.mutation_operator = mutation_operator
+        self.coefxyz_mutation = coefxyz_mutation
+        self.scale_mutation = scale_mutation
+        self.nb_generations = nb_generations
+        self.coverage = 0.0
+        self.current_evaluation = 0
+        
 
     def from_normalized_to_unnormalize_population(self, nomalized_population):
         pop_unormalized = []
@@ -106,15 +113,64 @@ class Population(Individual):
         return archive_element_from_one_tensor
 
 
-    def mutate_population_from_selction(self, selection,coefxyz_mutation):
+    def mutate_population_from_selction(self, selection, coverage=None):
         coef_classic_mutattion =0.01
         pop_mutated = []
+
+        # ES operator
+        sigma_min = 0.025
+        sigma0 = 0.5
+        tau = 1 / np.sqrt(self.ind_size)
+
+        # SA operator
+        start_sa = 0.2
+        stop_sa = 0.025
+        N_total = self.pop_size * self.nb_generations
+
+        # Cov operator
+        start_cov = 0.4 
+        stop_cov = 0.025
+
         for ind in selection:
+            '''
             mutation_on_gene_xyz = np.random.rand(1, 3)*coefxyz_mutation
             mutation_on_classic_gene_xyz = np.random.rand(1, self.ind_size-3) * coef_classic_mutattion # entre zero et un
+            mutation_on_gene_xyz = np.random.normal(loc=0.0, scale =scale_mutation, size=(1, 3)) # scale **2 = variance
+            mutation_on_classic_gene_xyz = np.random.normal(loc=0.0, scale = scale_mutation, size=(1, self.ind_size - 3))
+            '''
+            if self.mutation_operator == "gaussian":
+                mutation_on_gene_xyz = np.random.normal(loc=0.0, scale=self.scale_mutation, size=(1, 3))# scale **2 = variance
+                mutation_on_classic_gene_xyz = np.random.normal(loc=0.0, scale=self.scale_mutation, size=(1, self.ind_size - 3))
+                rand_nomalized_mutation = np.concatenate([mutation_on_gene_xyz,mutation_on_classic_gene_xyz], axis=1)
 
-            rand_nomalized_mutation = np.concatenate([mutation_on_gene_xyz,mutation_on_classic_gene_xyz], axis=1)
-            self.from_normalized_to_scaled_mutation(rand_nomalized_mutation)
+            elif self.mutation_operator == "random":
+                mutation_on_gene_xyz = np.random.rand(1, 3)*self.coefxyz_mutation
+                mutation_on_classic_gene_xyz = np.random.rand(1, self.ind_size-3) * coef_classic_mutattion # entre zero et un
+                rand_nomalized_mutation = np.concatenate([mutation_on_gene_xyz,mutation_on_classic_gene_xyz], axis=1)
+            
+            elif self.mutation_operator == "es":
+                sigma = sigma0 * np.exp(tau * np.random.normal(0, 1))
+                sigma = max(sigma, sigma_min)
+                rand_nomalized_mutation = np.random.normal(loc=0.0, scale=sigma, size=(1, self.ind_size))
+     
+            elif self.mutation_operator == "sa":
+                progress = self.current_evaluation / N_total
+                sigma = start_sa - (start_sa - stop_sa) * progress
+                sigma = max(sigma, stop_sa)
+                rand_nomalized_mutation = np.random.normal(loc=0.0, scale=sigma, size=(1, self.ind_size))
+                self.current_evaluation += 1
+                
+            elif self.mutation_operator == "cov":
+                sigma = start_cov - (start_cov - stop_cov) * (coverage if coverage is not None else 0.0)
+                sigma = max(sigma, stop_cov)
+                rand_nomalized_mutation = np.random.normal(loc=0.0, scale=sigma, size=(1, self.ind_size))
+
+
+            else:
+                raise ValueError(f"Unknown mutation operator: {self.mutation_operator}")
+
+            # rand_nomalized_mutation = np.concatenate([mutation_on_gene_xyz,mutation_on_classic_gene_xyz], axis=1)
+            # self.from_normalized_to_scaled_mutation(rand_nomalized_mutation)
             mutation_scaled = self.from_normalized_to_scaled_mutation(rand_nomalized_mutation)
             ind_mutated = ind + mutation_scaled[0]
             pop_mutated.append(ind_mutated)

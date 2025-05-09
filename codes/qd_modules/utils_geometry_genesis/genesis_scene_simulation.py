@@ -146,7 +146,7 @@ class Genesis_scene_simulation():
         if self.robot is None:
             if self.gripper == "end_effector":
                 self.robot = self.scene.add_entity(
-                    gs.morphs.URDF(file=self.path_panda,
+                    gs.morphs.URDF(file=os.getcwd() + '/robots/panda_gripper.urdf', # change by ziming
                                    pos=pos,
                                    # euler=(0, 0, 90),  # we follow scipy's extrinsic x-y-z rotation convention, in degrees,
                                    quat=quat,  # we use w-x-y-z convention for quaternions,
