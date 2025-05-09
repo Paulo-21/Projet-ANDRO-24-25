@@ -1,0 +1,14 @@
+[package]
+name = "dynamic_map_qd"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "dynamic_map_qd"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.24"
+rand = "0.9"
+litemap = "0.8"

@@ -1,0 +1,8 @@
+mod lib;
+use lib::*;
+
+
+fn main() {
+    let mut archive = Archive::new(String::from("close"), String::from("PATH"), Some(0.3), Some(3));
+    archive.store_one_new_element_in_archive()
+}
